@@ -30,6 +30,7 @@ public class AryState implements State {
         }
         if (nextState.decode(in)) {
             ary.add(nextState.finish());
+            nextState = null;
             return ary.size() == aryLength;
         } else {
             return false;
