@@ -10,4 +10,9 @@ public interface RespType {
      * Write the RESP form to the ByteBuf
      */
     void writeBytes(ByteBuf out);
+
+    /**
+     * Return the high-level Java equivalent.
+     */
+    Object unwrap();
 }

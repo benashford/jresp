@@ -33,7 +33,8 @@ public class Client {
     }
 
     public void stop() {
-        sharedConnection.stop();
+        // TODO: shut-down individual connections
+        // sharedConnection.stop();
         workers.shutdownGracefully();
     }
 }

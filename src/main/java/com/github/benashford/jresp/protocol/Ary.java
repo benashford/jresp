@@ -15,9 +15,14 @@ public class Ary implements RespType {
 
     @Override
     public void writeBytes(ByteBuf out) {
-        out.writeChar('*');
+        out.writeByte('*');
         out.writeBytes(Resp.longToByteArray(payload.size()));
         out.writeBytes(Resp.CRLF);
         payload.stream().forEach(x -> x.writeBytes(out));
+    }
+
+    @Override
+    public Object unwrap() {
+        return payload;
     }
 }

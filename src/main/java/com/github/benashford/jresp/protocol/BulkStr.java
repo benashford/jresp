@@ -15,15 +15,29 @@ public class BulkStr implements RespType {
         }
     }
 
+    public BulkStr(byte[] s) {
+        payload = s;
+    }
+
     @Override
     public void writeBytes(ByteBuf out) {
-        out.writeChar('$');
+        out.writeByte('$');
         if (payload == null) {
             out.writeBytes(Resp.longToByteArray(-1));
         } else {
             out.writeBytes(Resp.longToByteArray(payload.length));
+            out.writeBytes(Resp.CRLF);
             out.writeBytes(payload);
         }
         out.writeBytes(Resp.CRLF);
+    }
+
+    @Override
+    public Object unwrap() {
+        try {
+            return new String(payload, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new IllegalStateException(e);
+        }
     }
 }
