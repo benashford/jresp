@@ -26,7 +26,7 @@ public class AryState implements State {
             return false;
         }
         if (nextState == null) {
-            nextState = RespDecoder.nextState(in.readChar());
+            nextState = RespDecoder.nextState((char)in.readByte());
         }
         if (nextState.decode(in)) {
             ary.add(nextState.finish());

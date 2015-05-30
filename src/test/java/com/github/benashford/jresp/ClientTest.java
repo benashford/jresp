@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -25,12 +26,16 @@ public class ClientTest {
     private List<RespType> results = new ArrayList<>();
 
     @Before
-    public void setup() {
+    public void setup() throws Exception {
         client = new Client("localhost", 6379);
         con = client.makeConnection(result -> {
             results.add(result);
             latch.countDown();
         });
+        latch = new CountDownLatch(1);
+        con.write(Arrays.asList(flushDB()));
+        latch.await();
+        results.clear();
     }
 
     @After
@@ -38,8 +43,44 @@ public class ClientTest {
         client.stop();
     }
 
+    private Ary command(String name, RespType... options) {
+        List<RespType> elements = new ArrayList<>(options.length + 1);
+        elements.add(new BulkStr(name));
+        elements.addAll(Arrays.asList(options));
+
+        return new Ary(elements);
+    }
+
     private RespType ping() {
-        return new Ary(Arrays.asList(new BulkStr("PING")));
+        return command("PING");
+    }
+
+    private RespType flushDB() {
+        return command("FLUSHDB");
+    }
+
+    private RespType get(String key) {
+        return command("GET", new BulkStr(key));
+    }
+
+    private RespType set(String key, String value) {
+        return command("SET", new BulkStr(key), new BulkStr(value));
+    }
+
+    private RespType sadd(String key, String value) {
+        return command("SADD", new BulkStr(key), new BulkStr(value));
+    }
+
+    private RespType smembers(String key) {
+        return command("SMEMBERS", new BulkStr(key));
+    }
+
+    private void await() {
+        try {
+            latch.await(5, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     /**
@@ -51,7 +92,7 @@ public class ClientTest {
 
         con.write(Arrays.asList(ping()));
 
-        latch.await();
+        await();
         RespType result = results.get(0);
 
         assertEquals("PONG", result.unwrap());
@@ -63,7 +104,7 @@ public class ClientTest {
 
         con.write(Arrays.asList(ping(), ping()));
 
-        latch.await();
+        await();
 
         RespType result1 = results.get(0);
         RespType result2 = results.get(1);
@@ -74,12 +115,42 @@ public class ClientTest {
 
     @Test
     public void thousandPingTest() throws Exception {
-        latch = new CountDownLatch(1000);
+        int numPings = 1000;
 
-        con.write(IntStream.range(0, 1000).mapToObj(x -> ping()).collect(Collectors.toList()));
+        latch = new CountDownLatch(numPings);
 
-        latch.await();
+        con.write(IntStream.range(0, numPings).mapToObj(x -> ping()).collect(Collectors.toList()));
+
+        await();
 
         results.forEach(result -> assertEquals("PONG", result.unwrap()));
+    }
+
+    @Test
+    public void getSetTest() throws Exception {
+        int ops = 6;
+        latch = new CountDownLatch(ops);
+
+        con.write(Arrays.asList(set("A", "1"), set("B", "x"), set("C", "This is the third string")));
+        con.write(Arrays.asList(get("A"), get("B"), get("C")));
+
+        await();
+
+        assertEquals("1", results.get(3).unwrap());
+        assertEquals("x", results.get(4).unwrap());
+        assertEquals("This is the third string", results.get(5).unwrap());
+    }
+
+    @Test
+    public void arrayResponses() throws Exception {
+        int ops = 4;
+        latch = new CountDownLatch(ops);
+
+        con.write(Arrays.asList(sadd("D", "1"), sadd("D", "2"), sadd("D", "3")));
+        con.write(Arrays.asList(smembers("D")));
+
+        await();
+
+        assertEquals(Arrays.asList("1", "2", "3"), results.get(3).unwrap());
     }
 }

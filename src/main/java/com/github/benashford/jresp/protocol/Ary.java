@@ -5,6 +5,7 @@ import io.netty.buffer.ByteBuf;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Ary implements RespType {
     private List<RespType> payload;
@@ -23,6 +24,6 @@ public class Ary implements RespType {
 
     @Override
     public Object unwrap() {
-        return payload;
+        return payload.stream().map(RespType::unwrap).collect(Collectors.toList());
     }
 }
