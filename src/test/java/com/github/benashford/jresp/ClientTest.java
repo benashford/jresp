@@ -17,6 +17,7 @@ public class ClientTest {
         Connection con = client.getSharedConnection();
         con.write(Arrays.asList(new Ary(Arrays.asList(new BulkStr("PING")))));
 
+        // TODO : get rid of this.
         Thread.sleep(5000);
 
         client.stop();
