@@ -37,6 +37,8 @@ abstract class ScannableState implements State {
     }
 
     protected String bufferAsString() {
-        return innerBuffer.toString(0, innerBuffer.writerIndex() - 1, Charset.forName("UTF-8"));
+        String result = innerBuffer.toString(0, innerBuffer.writerIndex() - 1, Charset.forName("UTF-8"));
+        innerBuffer.release();
+        return result;
     }
 }

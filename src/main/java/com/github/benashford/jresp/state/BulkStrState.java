@@ -38,6 +38,7 @@ public class BulkStrState implements State {
         byte[] result = new byte[strLen];
         buffer.capacity(strLen);
         buffer.getBytes(0, result);
+        buffer.release();
         return new BulkStr(result);
     }
 }
