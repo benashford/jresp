@@ -1,7 +1,7 @@
-package com.github.benashford.jresp.state;
+package jresp.state;
 
-import com.github.benashford.jresp.protocol.Int;
-import com.github.benashford.jresp.protocol.RespType;
+import jresp.protocol.Int;
+import jresp.protocol.RespType;
 
 public class IntState extends ScannableState {
     @Override

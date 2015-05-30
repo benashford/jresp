@@ -1,4 +1,4 @@
-package com.github.benashford.jresp.protocol;
+package jresp.protocol;
 
 import java.io.UnsupportedEncodingException;
 

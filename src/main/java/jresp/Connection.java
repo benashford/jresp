@@ -1,12 +1,12 @@
-package com.github.benashford.jresp;
+package jresp;
 
-import com.github.benashford.jresp.protocol.RespType;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import jresp.protocol.RespType;
 
 import java.util.Collection;
 

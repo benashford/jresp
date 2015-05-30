@@ -1,8 +1,8 @@
-package com.github.benashford.jresp;
+package jresp;
 
-import com.github.benashford.jresp.protocol.Ary;
-import com.github.benashford.jresp.protocol.BulkStr;
-import com.github.benashford.jresp.protocol.RespType;
+import jresp.protocol.Ary;
+import jresp.protocol.BulkStr;
+import jresp.protocol.RespType;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class ClientTest {
     private Client client;

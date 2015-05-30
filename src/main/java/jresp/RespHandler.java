@@ -1,8 +1,8 @@
-package com.github.benashford.jresp;
+package jresp;
 
-import com.github.benashford.jresp.protocol.RespType;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+import jresp.protocol.RespType;
 
 public class RespHandler extends SimpleChannelInboundHandler<RespType> {
     private Responses responses;

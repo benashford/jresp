@@ -1,20 +1,20 @@
-package com.github.benashford.jresp.protocol;
+package jresp.protocol;
 
 import io.netty.buffer.ByteBuf;
 
 import java.io.UnsupportedEncodingException;
 
-public class Err implements RespType {
+public class SimpleStr implements RespType {
     private String payload;
 
-    public Err(String payload) {
-        this.payload = payload;
+    public SimpleStr(String str) {
+        payload = str;
     }
 
     @Override
     public void writeBytes(ByteBuf out) {
         try {
-            out.writeByte('-');
+            out.writeByte('+');
             out.writeBytes(payload.getBytes("UTF-8"));
             out.writeBytes(Resp.CRLF);
         } catch (UnsupportedEncodingException e) {

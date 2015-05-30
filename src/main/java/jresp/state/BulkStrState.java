@@ -1,9 +1,9 @@
-package com.github.benashford.jresp.state;
+package jresp.state;
 
-import com.github.benashford.jresp.protocol.BulkStr;
-import com.github.benashford.jresp.protocol.RespType;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import jresp.protocol.BulkStr;
+import jresp.protocol.RespType;
 
 public class BulkStrState implements State {
     private IntState intState = new IntState();

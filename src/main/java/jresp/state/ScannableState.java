@@ -1,8 +1,8 @@
-package com.github.benashford.jresp.state;
+package jresp.state;
 
-import com.github.benashford.jresp.protocol.Resp;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import jresp.protocol.Resp;
 
 import java.nio.charset.Charset;
 

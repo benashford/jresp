@@ -1,7 +1,7 @@
-package com.github.benashford.jresp.state;
+package jresp.state;
 
-import com.github.benashford.jresp.protocol.RespType;
 import io.netty.buffer.ByteBuf;
+import jresp.protocol.RespType;
 
 public interface State {
     boolean decode(ByteBuf in);

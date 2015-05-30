@@ -1,7 +1,7 @@
-package com.github.benashford.jresp.state;
+package jresp.state;
 
-import com.github.benashford.jresp.protocol.RespType;
-import com.github.benashford.jresp.protocol.SimpleStr;
+import jresp.protocol.RespType;
+import jresp.protocol.SimpleStr;
 
 public class SimpleStrState extends ScannableState {
     @Override

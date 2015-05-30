@@ -1,9 +1,9 @@
-package com.github.benashford.jresp.state;
+package jresp.state;
 
-import com.github.benashford.jresp.RespDecoder;
-import com.github.benashford.jresp.protocol.Ary;
-import com.github.benashford.jresp.protocol.RespType;
 import io.netty.buffer.ByteBuf;
+import jresp.RespDecoder;
+import jresp.protocol.Ary;
+import jresp.protocol.RespType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +26,7 @@ public class AryState implements State {
             return false;
         }
         if (nextState == null) {
-            nextState = RespDecoder.nextState((char)in.readByte());
+            nextState = RespDecoder.nextState((char) in.readByte());
         }
         if (nextState.decode(in)) {
             ary.add(nextState.finish());

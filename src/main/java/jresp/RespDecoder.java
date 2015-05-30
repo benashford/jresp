@@ -1,9 +1,9 @@
-package com.github.benashford.jresp;
+package jresp;
 
-import com.github.benashford.jresp.state.*;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
+import jresp.state.*;
 
 import java.util.List;
 
