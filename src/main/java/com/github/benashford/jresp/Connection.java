@@ -20,19 +20,21 @@ public class Connection {
 
     private Channel channel;
 
-    Connection(String hostname, int port, EventLoopGroup workers) {
+    Connection(String hostname,
+               int port,
+               EventLoopGroup workers) {
         this.hostname = hostname;
         this.port = port;
         this.workers = workers;
     }
 
-    void start() {
+    void start(Responses responses) {
         Bootstrap b = new Bootstrap();
         b.group(workers).channel(NioSocketChannel.class);
         b.handler(new ChannelInitializer<SocketChannel>() {
             @Override
             public void initChannel(SocketChannel ch) {
-                ch.pipeline().addLast(new RespDecoder(), new RespEncoder(), new RespHandler());
+                ch.pipeline().addLast(new RespDecoder(), new RespEncoder(), new RespHandler(responses));
             }
         });
 

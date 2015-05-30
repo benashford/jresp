@@ -13,9 +13,6 @@ public class Client {
 
     private final EventLoopGroup workers;
 
-    // TODO: also need non-shared connections
-    private Connection sharedConnection;
-
     public Client(String hostname, int port) {
         this.hostname = hostname;
         this.port = port;
@@ -23,18 +20,13 @@ public class Client {
         workers = new NioEventLoopGroup();
     }
 
-    public void start() {
-        sharedConnection = new Connection(hostname, port, workers);
-        sharedConnection.start();
-    }
-
-    public Connection getSharedConnection() {
-        return sharedConnection;
+    public Connection makeConnection(Responses responses) {
+        Connection con = new Connection(hostname, port, workers);
+        con.start(responses);
+        return con;
     }
 
     public void stop() {
-        // TODO: shut-down individual connections
-        // sharedConnection.stop();
         workers.shutdownGracefully();
     }
 }
