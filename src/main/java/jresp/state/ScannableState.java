@@ -17,44 +17,42 @@
 package jresp.state;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import jresp.protocol.Resp;
 
 import java.nio.charset.Charset;
 
 abstract class ScannableState implements State {
-    private ByteBuf innerBuffer = Unpooled.directBuffer(1024);
+    private static final int DEFAULT_SIZE = 32;
+    private byte[] buffer = new byte[DEFAULT_SIZE];
+    private int idx = 0;
 
     @Override
     public boolean decode(ByteBuf in) {
         int available = in.readableBytes();
-        for (int i = 0; i < available; i++) {
-            byte b = in.readByte();
-            if (endOfString(b)) {
-                return true;
-            } else {
-                innerBuffer.writeByte(b);
+        if (available > 0) {
+            for (int i = 0; i < available; i++) {
+                byte b = in.readByte();
+                if (idx > 0 && buffer[idx - 1] == Resp.CRLF[0] && b == Resp.CRLF[1]) {
+                    return true;
+                } else {
+                    if (idx == buffer.length) {
+                        resize();
+                    }
+                    buffer[idx++] = b;
+                }
             }
         }
+
         return false;
     }
 
-    private boolean endOfString(byte secondByte) {
-        int idx = innerBuffer.writerIndex();
-        if (idx == 0) {
-            return false;
-        }
-        if ((innerBuffer.getByte(idx - 1) == Resp.CRLF[0]) &&
-                (secondByte == Resp.CRLF[1])) {
-            return true;
-        } else {
-            return false;
-        }
+    private void resize() {
+        byte[] newBuffer = new byte[buffer.length * 2];
+        System.arraycopy(buffer, 0, newBuffer, 0, buffer.length);
+        buffer = newBuffer;
     }
 
     protected String bufferAsString() {
-        String result = innerBuffer.toString(0, innerBuffer.writerIndex() - 1, Charset.forName("UTF-8"));
-        innerBuffer.release();
-        return result;
+        return new String(buffer, 0, idx - 1, Charset.forName("UTF-8"));
     }
 }

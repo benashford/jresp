@@ -147,6 +147,22 @@ public class ClientTest {
         results.forEach(result -> assertEquals("PONG", result.unwrap()));
     }
 
+//    @Test
+//    public void benchmark() throws Exception {
+//        for (int c = 0; c < 50; c++) {
+//            int n = 1_000_000;
+//            latch = new CountDownLatch(n);
+//
+//            long start = System.nanoTime();
+//            con.write(IntStream.range(0, n).mapToObj(x -> set("foo", "bar")).collect(Collectors.toList()));
+//
+//            System.out.printf("Half way in: %.2fms%n", (System.nanoTime() - start) / 1000000.0);
+//
+//            await();
+//            System.out.printf("Done in: %.2fms%n", (System.nanoTime() - start) / 1000000.0);
+//        }
+//    }
+
     @Test
     public void getSetTest() throws Exception {
         int ops = 6;

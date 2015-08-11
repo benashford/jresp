@@ -18,16 +18,14 @@ package jresp.protocol;
 
 import io.netty.buffer.ByteBuf;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class Ary implements RespType {
     private List<RespType> payload;
 
-    public Ary(Collection<RespType> payload) {
-        this.payload = new ArrayList<>(payload);
+    public Ary(List<RespType> payload) {
+        this.payload = payload;
     }
 
     @Override

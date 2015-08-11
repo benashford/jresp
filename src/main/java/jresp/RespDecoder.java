@@ -35,7 +35,7 @@ public class RespDecoder extends ByteToMessageDecoder {
                 //
                 // We need more bytes
                 //
-                return;
+                break;
             }
 
             if (state == null) {
@@ -52,7 +52,7 @@ public class RespDecoder extends ByteToMessageDecoder {
                 //
                 // We need more bytes
                 //
-                return;
+                break;
             }
         }
     }
