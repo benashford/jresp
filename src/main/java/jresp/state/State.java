@@ -16,10 +16,11 @@
 
 package jresp.state;
 
-import io.netty.buffer.ByteBuf;
 import jresp.protocol.RespType;
 
+import java.nio.ByteBuffer;
+
 public interface State {
-    boolean decode(ByteBuf in);
+    boolean decode(ByteBuffer in);
     RespType finish();
 }

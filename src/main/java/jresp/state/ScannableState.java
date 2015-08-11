@@ -16,9 +16,9 @@
 
 package jresp.state;
 
-import io.netty.buffer.ByteBuf;
 import jresp.protocol.Resp;
 
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 
 abstract class ScannableState implements State {
@@ -27,11 +27,11 @@ abstract class ScannableState implements State {
     private int idx = 0;
 
     @Override
-    public boolean decode(ByteBuf in) {
-        int available = in.readableBytes();
+    public boolean decode(ByteBuffer in) {
+        int available = in.remaining();
         if (available > 0) {
             for (int i = 0; i < available; i++) {
-                byte b = in.readByte();
+                byte b = in.get();
                 if (idx > 0 && buffer[idx - 1] == Resp.CRLF[0] && b == Resp.CRLF[1]) {
                     return true;
                 } else {

@@ -16,21 +16,19 @@
 
 package jresp;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.ByteToMessageDecoder;
+import jresp.protocol.RespType;
 import jresp.state.*;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 
-public class RespDecoder extends ByteToMessageDecoder {
+public class RespDecoder {
 
     private State state = null;
 
-    @Override
-    protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
+    protected void decode(ByteBuffer in, List<RespType> out) {
         while (true) {
-            int availableBytes = in.readableBytes();
+            int availableBytes = in.remaining();
             if (availableBytes == 0) {
                 //
                 // We need more bytes
@@ -42,7 +40,7 @@ public class RespDecoder extends ByteToMessageDecoder {
                 //
                 // There is no current state, so read the next byte
                 //
-                char nextChar = (char) in.readByte();
+                char nextChar = (char) in.get();
                 state = nextState(nextChar);
             }
             if (state.decode(in)) {

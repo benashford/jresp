@@ -16,7 +16,8 @@
 
 package jresp.protocol;
 
-import io.netty.buffer.ByteBuf;
+import java.nio.ByteBuffer;
+import java.util.List;
 
 public class ClientErr implements RespType {
     private Throwable error;
@@ -26,7 +27,7 @@ public class ClientErr implements RespType {
     }
 
     @Override
-    public void writeBytes(ByteBuf out) {
+    public void writeBytes(List<ByteBuffer> out) {
         throw new UnsupportedOperationException("This cannot be written anywhere, this is only to be used within the client");
     }
 

@@ -16,7 +16,8 @@
 
 package jresp.protocol;
 
-import io.netty.buffer.ByteBuf;
+import java.nio.ByteBuffer;
+import java.util.List;
 
 /**
  * Defines the five types implemented by the RESP protocol
@@ -25,7 +26,7 @@ public interface RespType {
     /**
      * Write the RESP form to the ByteBuf
      */
-    void writeBytes(ByteBuf out);
+    void writeBytes(List<ByteBuffer> out);
 
     /**
      * Return the high-level Java equivalent.

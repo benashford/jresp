@@ -16,61 +16,192 @@
 
 package jresp;
 
-import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.nio.NioSocketChannel;
+import jresp.protocol.ClientErr;
 import jresp.protocol.RespType;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * An individual connection
  */
 public class Connection {
+    private static final int BYTE_BUFFER_DEFAULT_SIZE = 16;
+
     private String hostname;
     private int port;
-    private EventLoopGroup workers;
 
-    private Channel channel;
+    /**
+     * The service threads
+     */
+    private ConnectionWriteGroup writeGroup;
+    private ConnectionReadGroup readGroup;
 
+    /**
+     * The callback for incoming data
+     */
+    private Responses responses;
+
+    /**
+     * The socket channel
+     */
+    SocketChannel channel;
+
+    /**
+     * The buffer of out-going data
+     */
+    private Object bufferLock = new Object();
+    private ByteBuffer[] buffers = new ByteBuffer[BYTE_BUFFER_DEFAULT_SIZE];
+    private int buffersStart = 0;
+    private int buffersEnd = 0;
+
+    /**
+     * Decoder
+     */
+    private RespDecoder decoder = new RespDecoder();
+
+    /**
+     * Constructor
+     */
     Connection(String hostname,
                int port,
-               EventLoopGroup workers) {
+               ConnectionWriteGroup writeGroup,
+               ConnectionReadGroup readGroup) {
         this.hostname = hostname;
         this.port = port;
-        this.workers = workers;
+        this.writeGroup = writeGroup;
+        this.readGroup = readGroup;
     }
 
-    void start(Responses responses) {
-        Bootstrap b = new Bootstrap();
-        b.group(workers).channel(NioSocketChannel.class);
-        b.handler(new ChannelInitializer<SocketChannel>() {
-            @Override
-            public void initChannel(SocketChannel ch) {
-                ch.pipeline().addLast(new RespDecoder(), new RespEncoder(), new RespHandler(responses));
-            }
-        });
+    void start(Responses responses) throws IOException {
+        this.responses = responses;
 
-        try {
-            channel = b.connect(hostname, port).sync().channel();
-        } catch (InterruptedException e) {
-            throw new IllegalStateException(e);
-        }
+        // TODO - make non-blocking
+        this.channel = SocketChannel.open(new InetSocketAddress(hostname, port));
+        this.channel.configureBlocking(false);
+        writeGroup.add(this);
+        readGroup.add(this);
     }
 
     void stop() {
-        try {
-            channel.closeFuture().sync();
-        } catch (InterruptedException e) {
-            throw new IllegalStateException(e);
+        throw new AssertionError("Unimplemented");
+    }
+
+    private int bufferRemaining() {
+        int right = buffersEnd;
+        if (right < buffersStart) {
+            right += buffers.length;
+        }
+        return buffers.length - (right - buffersStart);
+    }
+
+    private void addAllToBuffer(List<ByteBuffer> out) {
+        for (ByteBuffer buf : out) {
+            buffers[buffersEnd++] = buf;
+            if (buffersEnd == buffers.length) {
+                buffersEnd = 0;
+            }
         }
     }
 
+    private void resizeBuffer(int extraRequired) {
+        int size = Math.max(buffers.length * 2, buffers.length + extraRequired + 1);
+
+        ByteBuffer[] newBuffers = new ByteBuffer[size];
+        int length;
+
+        if (buffersEnd >= buffersStart) {
+            length = buffersEnd - buffersStart;
+        } else {
+            length = buffers.length - buffersStart;
+        }
+
+        System.arraycopy(buffers, buffersStart, newBuffers, 0, length);
+
+        if (buffersEnd < buffersStart) {
+            System.arraycopy(buffers, 0, newBuffers, length, buffersEnd);
+            length += buffersEnd;
+        }
+
+        buffers = newBuffers;
+        buffersStart = 0;
+        buffersEnd = length;
+    }
+
     public void write(Collection<RespType> messages) {
-        messages.stream().forEach(channel::write);
-        channel.flush();
+        int bytes = 0;
+        for (RespType message : messages) {
+            List<ByteBuffer> out = new ArrayList<>();
+            message.writeBytes(out);
+
+            for (ByteBuffer o : out) {
+                o.flip();
+                bytes += o.remaining();
+            }
+
+            int outSize = out.size();
+
+            synchronized (bufferLock) {
+                int remaining = bufferRemaining();
+                if (outSize >= remaining) {
+                    resizeBuffer(outSize - remaining);
+                }
+                addAllToBuffer(out);
+            }
+
+            if (bytes >= 7936) {
+                writeGroup.signal();
+                bytes = 0;
+            }
+        }
+        writeGroup.signal();
+    }
+
+    void writeTick() throws IOException {
+        synchronized (bufferLock) {
+            int end;
+            if (buffersEnd >= buffersStart) {
+                end = buffersEnd;
+            } else {
+                end = buffers.length;
+            }
+            int length = end - buffersStart;
+            channel.write(buffers, buffersStart, length);
+
+            int i = buffersStart;
+            while (i < end && !buffers[i].hasRemaining()) {
+                buffers[i++] = null;
+                buffersStart++;
+                if (buffersStart >= buffers.length) {
+                    buffersStart = 0;
+                }
+            }
+
+            if (buffersStart != buffersEnd) {
+                writeGroup.signal();
+            }
+        }
+    }
+
+    void readTick() {
+        ByteBuffer buf = ByteBuffer.allocate(4096);
+        try {
+            channel.read(buf);
+            buf.flip();
+            List<RespType> out = new ArrayList<>();
+            decoder.decode(buf, out);
+            out.forEach(responses::responseReceived);
+        } catch (IOException e) {
+            responses.responseReceived(new ClientErr(e));
+        }
+    }
+
+    void reportException(Exception e) {
+        responses.responseReceived(new ClientErr(e));
     }
 }

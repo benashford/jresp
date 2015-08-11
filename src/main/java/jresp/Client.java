@@ -16,8 +16,7 @@
 
 package jresp;
 
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
+import java.io.IOException;
 
 /**
  * The owner of one-or-more connections.
@@ -27,22 +26,27 @@ public class Client {
 
     private final int port;
 
-    private final EventLoopGroup workers;
+    private final ConnectionWriteGroup writeGroup;
+    private final ConnectionReadGroup readGroup;
 
-    public Client(String hostname, int port) {
+    public Client(String hostname, int port) throws IOException {
         this.hostname = hostname;
         this.port = port;
 
-        workers = new NioEventLoopGroup();
+        writeGroup = new ConnectionWriteGroup();
+        writeGroup.start();
+
+        readGroup = new ConnectionReadGroup();
+        readGroup.start();
     }
 
-    public Connection makeConnection(Responses responses) {
-        Connection con = new Connection(hostname, port, workers);
+    public Connection makeConnection(Responses responses) throws IOException {
+        Connection con = new Connection(hostname, port, writeGroup, readGroup);
         con.start(responses);
         return con;
     }
 
     public void stop() {
-        workers.shutdownGracefully();
+        writeGroup.shutdownGracefully();
     }
 }

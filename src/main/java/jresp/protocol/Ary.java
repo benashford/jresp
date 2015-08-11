@@ -16,8 +16,7 @@
 
 package jresp.protocol;
 
-import io.netty.buffer.ByteBuf;
-
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,10 +28,14 @@ public class Ary implements RespType {
     }
 
     @Override
-    public void writeBytes(ByteBuf out) {
-        out.writeByte('*');
-        out.writeBytes(Resp.longToByteArray(payload.size()));
-        out.writeBytes(Resp.CRLF);
+    public void writeBytes(List<ByteBuffer> out) {
+        byte[] header = Resp.longToByteArray(payload.size());
+        int size = 1 + header.length + 2;
+        ByteBuffer o = ByteBuffer.allocate(size);
+        o.put((byte)'*');
+        o.put(header);
+        o.put(Resp.CRLF);
+        out.add(o);
         payload.stream().forEach(x -> x.writeBytes(out));
     }
 

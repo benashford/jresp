@@ -16,9 +16,9 @@
 
 package jresp.protocol;
 
-import io.netty.buffer.ByteBuf;
-
 import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
+import java.util.List;
 
 public class Err implements RespType {
     private String payload;
@@ -28,11 +28,17 @@ public class Err implements RespType {
     }
 
     @Override
-    public void writeBytes(ByteBuf out) {
+    public void writeBytes(List<ByteBuffer> out) {
         try {
-            out.writeByte('-');
-            out.writeBytes(payload.getBytes("UTF-8"));
-            out.writeBytes(Resp.CRLF);
+            byte[] bytes = payload.getBytes("UTF-8");
+            int size = 1 + bytes.length + 2;
+
+            ByteBuffer o = ByteBuffer.allocate(size);
+
+            o.put((byte)'-');
+            o.put(bytes);
+            o.put(Resp.CRLF);
+            out.add(o);
         } catch (UnsupportedEncodingException e) {
             throw new IllegalStateException(e);
         }

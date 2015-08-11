@@ -159,6 +159,7 @@ public class ClientTest {
 //            System.out.printf("Half way in: %.2fms%n", (System.nanoTime() - start) / 1000000.0);
 //
 //            await();
+//            results.clear();
 //            System.out.printf("Done in: %.2fms%n", (System.nanoTime() - start) / 1000000.0);
 //        }
 //    }

@@ -16,18 +16,19 @@
 
 package jresp.state;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import jresp.protocol.BulkStr;
 import jresp.protocol.RespType;
+
+import java.nio.ByteBuffer;
 
 public class BulkStrState implements State {
     private IntState intState = new IntState();
     private Integer stringLength = null;
-    private ByteBuf buffer = Unpooled.directBuffer(1024);
+    private byte[] buffer = null;
+    private int idx = 0;
 
     @Override
-    public boolean decode(ByteBuf in) {
+    public boolean decode(ByteBuffer in) {
         if (stringLength == null) {
              if (intState.decode(in)) {
                  long len = intState.finishInt();
@@ -42,14 +43,18 @@ public class BulkStrState implements State {
             return true;
         }
         if (stringLength != null) {
-            int diff = stringLength - buffer.writerIndex();
+            if (buffer == null) {
+                buffer = new byte[stringLength];
+            }
+            int diff = stringLength - idx;
             if (diff == 0) {
                 return true;
             } else if (diff < 0) {
                 throw new IllegalStateException("Got too much data");
             } else {
-                int readable = Math.min(diff, in.readableBytes());
-                in.readBytes(buffer, readable);
+                int readable = Math.min(diff, in.remaining());
+                in.get(buffer, idx, readable);
+                idx += readable;
                 return readable == diff;
             }
         }
@@ -63,9 +68,7 @@ public class BulkStrState implements State {
         } else {
             int strLen = stringLength - 2; // To account for CRLF
             byte[] result = new byte[strLen];
-            buffer.capacity(strLen);
-            buffer.getBytes(0, result);
-            buffer.release();
+            System.arraycopy(buffer, 0, result, 0, strLen);
             return new BulkStr(result);
         }
     }
