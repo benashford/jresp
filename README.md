@@ -16,7 +16,7 @@ Java 8 or higher.
 
 It also provides a way of communicating with a Redis server called [`Connection`](src/main/java/jresp/Connection.java).  These are created using the [`Client`](src/main/java/jresp/Client.java).
 
-Implemented using [Netty](http://netty.io), communication is asynchronous.  When creating a `Connection` an object/closure implementing [`Responses`](src/main/java/jresp/Responses.java) needs to be provided.  Messages are written using the `write` method on `Connection`; each response from the server will result in `responseReceived` on the implementation of `Responses`.
+When creating a `Connection` an object/closure implementing [`Responses`](src/main/java/jresp/Responses.java) needs to be provided.  Messages are written using the `write` method on `Connection`; each response from the server will result in `responseReceived` on the implementation of `Responses`.
 
 Example:
 
