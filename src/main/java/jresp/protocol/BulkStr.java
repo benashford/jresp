@@ -18,7 +18,7 @@ package jresp.protocol;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
-import java.util.List;
+import java.util.Deque;
 
 public class BulkStr implements RespType {
     private byte[] payload;
@@ -40,7 +40,7 @@ public class BulkStr implements RespType {
     }
 
     @Override
-    public void writeBytes(List<ByteBuffer> out) {
+    public void writeBytes(Deque<ByteBuffer> out) {
         int size = 1;
         byte[] header;
         if (payload == null) {
@@ -51,7 +51,7 @@ public class BulkStr implements RespType {
         }
         size += 2 + header.length;
 
-        ByteBuffer o = ByteBuffer.allocate(size);
+        ByteBuffer o = Resp.buffer(out, size);
         o.put((byte)'$');
         o.put(header);
         if (payload != null) {
@@ -59,7 +59,6 @@ public class BulkStr implements RespType {
             o.put(payload);
         }
         o.put(Resp.CRLF);
-        out.add(o);
     }
 
     public byte[] raw() {

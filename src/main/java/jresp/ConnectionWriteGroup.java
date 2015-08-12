@@ -19,34 +19,55 @@ package jresp;
 import jresp.util.Signaller;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.nio.channels.ClosedChannelException;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.util.*;
 
 public class ConnectionWriteGroup extends Thread {
-    private Set<Connection> connections = Collections.synchronizedSet(new HashSet<>());
+    private int serialNo = 0;
+    private Map<Integer, Connection> connections = Collections.synchronizedMap(new HashMap<>());
     private Signaller signaller = new Signaller();
+    private Selector selector;
+
+    ConnectionWriteGroup() throws IOException {
+        selector = Selector.open();
+    }
 
     public void run() {
         // TODO - shutdown gracefully
         while (true) {
-            signaller.reset();
-            for (Connection connection : connections) {
+            Set<Connection> cons = signaller.reset();
+            while (!cons.isEmpty()) {
                 try {
-                    connection.writeTick();
+                    selector.select(10);
+                    Set<SelectionKey> keys = selector.selectedKeys();
+                    for (SelectionKey key : keys) {
+                        Connection connection = connections.get(key.attachment());
+                        if (cons.remove(connection)) {
+                            try {
+                                connection.writeTick();
+                            } catch (IOException e) {
+                                connection.reportException(e);
+                            }
+                        }
+                    }
                 } catch (IOException e) {
-                    connection.reportException(e);
+                    // TODO - notify the clients
+                    throw new RuntimeException(e);
                 }
             }
         }
     }
 
-    void signal() {
-        signaller.signal();
+    void signal(Connection c) {
+        signaller.signal(c);
     }
 
-    public void add(Connection c) {
-        connections.add(c);
+    public void add(Connection c) throws ClosedChannelException {
+        int id = serialNo++;
+        SelectionKey key = c.channel.register(selector, SelectionKey.OP_WRITE, id);
+        connections.put(id, c);
     }
 
     public void shutdownGracefully() {

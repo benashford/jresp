@@ -17,6 +17,8 @@
 package jresp.protocol;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
+import java.util.Deque;
 
 public class Resp {
     public static final byte[] CRLF;
@@ -35,5 +37,20 @@ public class Resp {
         } catch (UnsupportedEncodingException e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    /**
+     * Pick an existing, or create a new ByteBuffer
+     */
+    static ByteBuffer buffer(Deque<ByteBuffer> buffers, int size) {
+        if (!buffers.isEmpty()) {
+            ByteBuffer last = buffers.peekFirst();
+            if (last.remaining() >= size) {
+                return last;
+            }
+        }
+        ByteBuffer newBuffer = ByteBuffer.allocateDirect(Math.max(1460, size));
+        buffers.add(newBuffer);
+        return newBuffer;
     }
 }

@@ -17,7 +17,7 @@
 package jresp.protocol;
 
 import java.nio.ByteBuffer;
-import java.util.List;
+import java.util.Deque;
 
 public class Int implements RespType {
     private long payload;
@@ -27,14 +27,13 @@ public class Int implements RespType {
     }
 
     @Override
-    public void writeBytes(List<ByteBuffer> out) {
+    public void writeBytes(Deque<ByteBuffer> out) {
         byte[] bytes = Resp.longToByteArray(payload);
         int size = 1 + bytes.length + 2;
-        ByteBuffer o = ByteBuffer.allocate(size);
-        o.put((byte)':');
+        ByteBuffer o = Resp.buffer(out, size);
+        o.put((byte) ':');
         o.put(bytes);
         o.put(Resp.CRLF);
-        out.add(o);
     }
 
     @Override

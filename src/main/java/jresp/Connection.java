@@ -23,9 +23,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * An individual connection
@@ -66,6 +64,11 @@ public class Connection {
     private RespDecoder decoder = new RespDecoder();
 
     /**
+     * Read buffer
+     */
+    private ByteBuffer readBuffer = ByteBuffer.allocateDirect(1460);
+
+    /**
      * Constructor
      */
     Connection(String hostname,
@@ -100,17 +103,26 @@ public class Connection {
         return buffers.length - (right - buffersStart);
     }
 
-    private void addAllToBuffer(List<ByteBuffer> out) {
-        for (ByteBuffer buf : out) {
-            buffers[buffersEnd++] = buf;
-            if (buffersEnd == buffers.length) {
-                buffersEnd = 0;
-            }
+    private void addToBuffer(ByteBuffer out) {
+        buffers[buffersEnd++] = out;
+        if (buffersEnd == buffers.length) {
+            buffersEnd = 0;
         }
     }
 
-    private void resizeBuffer(int extraRequired) {
-        int size = Math.max(buffers.length * 2, buffers.length + extraRequired + 1);
+    private void addAndResize(ByteBuffer out) {
+        synchronized (bufferLock) {
+            int remaining = bufferRemaining();
+            if (remaining == 1) {
+                // Always leave a gap
+                resizeBuffer();
+            }
+            addToBuffer(out);
+        }
+    }
+
+    private void resizeBuffer() {
+        int size = buffers.length * 2;
 
         ByteBuffer[] newBuffers = new ByteBuffer[size];
         int length;
@@ -134,32 +146,23 @@ public class Connection {
     }
 
     public void write(Collection<RespType> messages) {
-        int bytes = 0;
+        Deque<ByteBuffer> out = new ArrayDeque<>();
         for (RespType message : messages) {
-            List<ByteBuffer> out = new ArrayList<>();
             message.writeBytes(out);
-
-            for (ByteBuffer o : out) {
-                o.flip();
-                bytes += o.remaining();
-            }
-
-            int outSize = out.size();
-
-            synchronized (bufferLock) {
-                int remaining = bufferRemaining();
-                if (outSize >= remaining) {
-                    resizeBuffer(outSize - remaining);
-                }
-                addAllToBuffer(out);
-            }
-
-            if (bytes >= 7936) {
-                writeGroup.signal();
-                bytes = 0;
+            int done = out.size() - 1;
+            for (int i = 0; i < done; i++) {
+                ByteBuffer bb = out.pop();
+                bb.flip();
+                addAndResize(bb);
+                writeGroup.signal(this);
             }
         }
-        writeGroup.signal();
+
+        ByteBuffer bb = out.pop();
+        bb.flip();
+        addAndResize(bb);
+
+        writeGroup.signal(this);
     }
 
     void writeTick() throws IOException {
@@ -171,7 +174,8 @@ public class Connection {
                 end = buffers.length;
             }
             int length = end - buffersStart;
-            channel.write(buffers, buffersStart, length);
+            long bytes = channel.write(buffers, buffersStart, length);
+            //System.out.printf("Sent: %d%n", bytes);
 
             int i = buffersStart;
             while (i < end && !buffers[i].hasRemaining()) {
@@ -183,22 +187,23 @@ public class Connection {
             }
 
             if (buffersStart != buffersEnd) {
-                writeGroup.signal();
+                writeGroup.signal(this);
             }
         }
     }
 
     void readTick() {
-        ByteBuffer buf = ByteBuffer.allocate(4096);
         try {
-            channel.read(buf);
-            buf.flip();
+            int bytes = channel.read(readBuffer);
+            //System.out.println("Read: " + bytes);
+            readBuffer.flip();
             List<RespType> out = new ArrayList<>();
-            decoder.decode(buf, out);
+            decoder.decode(readBuffer, out);
             out.forEach(responses::responseReceived);
         } catch (IOException e) {
             responses.responseReceived(new ClientErr(e));
         }
+        readBuffer.clear();
     }
 
     void reportException(Exception e) {

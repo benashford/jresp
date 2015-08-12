@@ -17,6 +17,7 @@
 package jresp.protocol;
 
 import java.nio.ByteBuffer;
+import java.util.Deque;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,14 +29,13 @@ public class Ary implements RespType {
     }
 
     @Override
-    public void writeBytes(List<ByteBuffer> out) {
+    public void writeBytes(Deque<ByteBuffer> out) {
         byte[] header = Resp.longToByteArray(payload.size());
         int size = 1 + header.length + 2;
-        ByteBuffer o = ByteBuffer.allocate(size);
+        ByteBuffer o = Resp.buffer(out, size);
         o.put((byte)'*');
         o.put(header);
         o.put(Resp.CRLF);
-        out.add(o);
         payload.stream().forEach(x -> x.writeBytes(out));
     }
 
