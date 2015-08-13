@@ -44,7 +44,7 @@ public class Resp {
      */
     static ByteBuffer buffer(Deque<ByteBuffer> buffers, int size) {
         if (!buffers.isEmpty()) {
-            ByteBuffer last = buffers.peekFirst();
+            ByteBuffer last = buffers.peekLast();
             if (last.remaining() >= size) {
                 return last;
             }

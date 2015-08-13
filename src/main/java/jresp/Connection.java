@@ -66,7 +66,7 @@ public class Connection {
     /**
      * Read buffer
      */
-    private ByteBuffer readBuffer = ByteBuffer.allocateDirect(1460);
+    private ByteBuffer readBuffer = ByteBuffer.allocateDirect(5285);  // 1460
 
     /**
      * Constructor

@@ -6,6 +6,8 @@ import org.junit.Test;
 
 import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.junit.Assert.*;
 
@@ -15,6 +17,15 @@ public class RespDecoderTest {
     private static final Collection<ByteBuffer> encode(RespType respObj) {
         Deque<ByteBuffer> out = new ArrayDeque<>();
         respObj.writeBytes(out);
+
+        out.forEach(x -> x.flip());
+
+        return out;
+    }
+
+    private static final Collection<ByteBuffer> encode(Collection<RespType> objs) {
+        Deque<ByteBuffer> out = new ArrayDeque<>();
+        objs.forEach(obj -> obj.writeBytes(out));
 
         out.forEach(x -> x.flip());
 
@@ -87,5 +98,18 @@ public class RespDecoderTest {
         expected.add("This is a whole list of words");
 
         assertEquals(expected, out.get(0).unwrap());
+    }
+
+    @Test
+    public void millionOks() throws Exception {
+        List<RespType> oks = IntStream.range(0, 1_000_000).mapToObj(x -> new SimpleStr("OK")).collect(Collectors.toList());
+        for (int n = 0; n < 25; n++) {
+            Collection<ByteBuffer> encoded = encode(oks);
+
+            long startTime = System.nanoTime();
+            List<RespType> out = decode(encoded);
+            assertEquals(1_000_000, out.size());
+            System.out.printf("Elapsed: %.2fms%n", (System.nanoTime() - startTime) / 1_000_000.0);
+        }
     }
 }
