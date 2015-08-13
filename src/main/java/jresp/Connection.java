@@ -53,7 +53,7 @@ public class Connection {
     /**
      * The buffer of out-going data
      */
-    private Object bufferLock = new Object();
+    private final Object bufferLock = new Object();
     private ByteBuffer[] buffers = new ByteBuffer[BYTE_BUFFER_DEFAULT_SIZE];
     private int buffersStart = 0;
     private int buffersEnd = 0;
@@ -84,7 +84,6 @@ public class Connection {
     void start(Responses responses) throws IOException {
         this.responses = responses;
 
-        // TODO - make non-blocking
         this.channel = SocketChannel.open(new InetSocketAddress(hostname, port));
         this.channel.configureBlocking(false);
         writeGroup.add(this);
