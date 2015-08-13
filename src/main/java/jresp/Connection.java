@@ -153,13 +153,16 @@ public class Connection {
                 ByteBuffer bb = out.pop();
                 bb.flip();
                 addAndResize(bb);
+            }
+            if (done > 0) {
                 writeGroup.signal(this);
             }
         }
 
-        ByteBuffer bb = out.pop();
-        bb.flip();
-        addAndResize(bb);
+        for (ByteBuffer bb : out) {
+            bb.flip();
+            addAndResize(bb);
+        }
 
         writeGroup.signal(this);
     }
