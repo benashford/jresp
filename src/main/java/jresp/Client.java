@@ -46,7 +46,8 @@ public class Client {
         return con;
     }
 
-    public void stop() {
-        writeGroup.shutdownGracefully();
+    public void shutdown() {
+        writeGroup.shutdown();
+        readGroup.shutdown();
     }
 }

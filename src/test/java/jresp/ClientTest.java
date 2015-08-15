@@ -57,7 +57,7 @@ public class ClientTest {
 
     @After
     public void teardown() {
-        client.stop();
+        client.shutdown();
     }
 
     private Ary command(String name, RespType... options) {

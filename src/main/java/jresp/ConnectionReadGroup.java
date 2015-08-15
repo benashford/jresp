@@ -30,13 +30,14 @@ public class ConnectionReadGroup extends Thread {
     private Map<Integer, Connection> connections = Collections.synchronizedMap(new HashMap<>());
     private Selector selector;
 
+    private boolean shutdown;
+
     ConnectionReadGroup() throws IOException {
         selector = Selector.open();
     }
 
     public void run() {
-        // TODO - graceful shutdown
-        while (true) {
+        while (!shutdown) {
             try {
                 selector.select(10);
                 Set<SelectionKey> keys = selector.selectedKeys();
@@ -58,7 +59,7 @@ public class ConnectionReadGroup extends Thread {
         connections.put(id, c);
     }
 
-    public void shutdownGracefully() {
-        throw new AssertionError("Unimplemented");
+    public void shutdown() {
+        shutdown = true;
     }
 }

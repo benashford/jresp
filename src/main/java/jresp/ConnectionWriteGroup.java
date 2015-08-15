@@ -30,13 +30,15 @@ public class ConnectionWriteGroup extends Thread {
     private Signaller signaller = new Signaller();
     private Selector selector;
 
+    private boolean shutdown;
+
     ConnectionWriteGroup() throws IOException {
         selector = Selector.open();
     }
 
     public void run() {
         // TODO - shutdown gracefully
-        while (true) {
+        while (!shutdown) {
             Set<Connection> cons = signaller.reset();
             while (!cons.isEmpty()) {
                 try {
@@ -70,7 +72,7 @@ public class ConnectionWriteGroup extends Thread {
         connections.put(id, c);
     }
 
-    public void shutdownGracefully() {
-        //throw new AssertionError("Unimplemented");
+    public void shutdown() {
+        shutdown = true;
     }
 }
