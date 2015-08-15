@@ -25,6 +25,8 @@ import java.nio.channels.Selector;
 import java.util.*;
 
 public class ConnectionWriteGroup extends Thread {
+    private static int threadId = 1;
+
     private int serialNo = 0;
     private Map<Integer, Connection> connections = Collections.synchronizedMap(new HashMap<>());
     private Signaller signaller = new Signaller();
@@ -34,6 +36,9 @@ public class ConnectionWriteGroup extends Thread {
 
     ConnectionWriteGroup() throws IOException {
         selector = Selector.open();
+
+        setName(String.format("ConnectionWriteGroup-%d", threadId++));
+        setDaemon(true);
     }
 
     public void run() {

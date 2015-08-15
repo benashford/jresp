@@ -49,9 +49,7 @@ As of the time of writing, it is used for [`redis-async`, a async Redis client f
 
 ## TODO
 
-1. Ensure threads have useful names.
-2. Ensure priorities/daemon states are set correctly.
-3. Ensure that erroring connections can be removed from the client.
+1. Ensure that erroring connections can be removed from the client.
 
 ## Licence
 

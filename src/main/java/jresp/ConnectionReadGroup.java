@@ -26,6 +26,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class ConnectionReadGroup extends Thread {
+    private static int threadId = 1;
+
     private int serialNo = 0;
     private Map<Integer, Connection> connections = Collections.synchronizedMap(new HashMap<>());
     private Selector selector;
@@ -34,6 +36,9 @@ public class ConnectionReadGroup extends Thread {
 
     ConnectionReadGroup() throws IOException {
         selector = Selector.open();
+
+        setName(String.format("ConnectionReadGroup-%d", threadId++));
+        setDaemon(true);
     }
 
     public void run() {
