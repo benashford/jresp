@@ -47,6 +47,14 @@ There are pre-existing Redis clients for Java, both synchronous and asynchronous
 
 As of the time of writing, it is used for [`redis-async`, a async Redis client for Clojure](https://github.com/benashford/redis-async).  I have written about the development of `jresp` and `redis-async` [here](http://benashford.github.io/blog/2015/06/02/java-in-a-polygot-jvm-world/)
 
+## TODO
+
+1. Move connection pool to JRESP layer.
+2. Implement class-of-commands at the JRESP layer - e.g. normal, blocking, pub-sub (may not be possible without taking care of each particular command), etc.
+3. Performance testing.
+4. Redis clustering.
+5. Create a full Java client (optional).
+
 ## Licence
 
 ```

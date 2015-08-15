@@ -138,13 +138,17 @@ public class ClientTest {
     public void thousandPingTest() throws Exception {
         int numPings = 1000;
 
-        latch = new CountDownLatch(numPings);
+        for (int n = 0; n < 25; n++) {
+            long start = System.nanoTime();
+            latch = new CountDownLatch(numPings);
 
-        con.write(IntStream.range(0, numPings).mapToObj(x -> ping()).collect(Collectors.toList()));
+            con.write(IntStream.range(0, numPings).mapToObj(x -> ping()).collect(Collectors.toList()));
 
-        await();
+            await();
+            System.out.printf("Done in %.2fms%n", (System.nanoTime() - start) / 1000000.0);
 
-        results.forEach(result -> assertEquals("PONG", result.unwrap()));
+            results.forEach(result -> assertEquals("PONG", result.unwrap()));
+        }
     }
 
 //    @Test
