@@ -56,7 +56,7 @@ public class ClientTest {
     }
 
     @After
-    public void teardown() {
+    public void teardown() throws Exception {
         client.shutdown();
     }
 

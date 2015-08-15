@@ -27,7 +27,6 @@ import java.util.*;
 public class ConnectionWriteGroup extends Thread {
     private static int threadId = 1;
 
-    private int serialNo = 0;
     private Map<Integer, Connection> connections = Collections.synchronizedMap(new HashMap<>());
     private Signaller signaller = new Signaller();
     private Selector selector;
@@ -72,12 +71,38 @@ public class ConnectionWriteGroup extends Thread {
     }
 
     public void add(Connection c) throws ClosedChannelException {
-        int id = serialNo++;
-        SelectionKey key = c.channel.register(selector, SelectionKey.OP_WRITE, id);
-        connections.put(id, c);
+        SelectionKey key = c.channel.register(selector, SelectionKey.OP_WRITE, c.id);
+        connections.put(c.id, c);
     }
 
-    public void shutdown() {
+    public void remove(Connection c) {
+        connections.remove(c.id);
+    }
+
+    public void shutdown() throws IOException {
         shutdown = true;
+
+        List<IOException> exceptions = new ArrayList<>();
+
+        for (Connection con : connections.values()) {
+            try {
+                con.shutdown();
+            } catch (IOException e) {
+                exceptions.add(e);
+            }
+        }
+
+        if (!exceptions.isEmpty()) {
+            throw new ShutdownException(exceptions);
+        }
+    }
+}
+
+class ShutdownException extends IOException {
+    private Collection<IOException> exceptions;
+
+    ShutdownException(Collection<IOException> e) {
+        super(String.format("Multiple (%d) exceptions", e.size()));
+        exceptions = e;
     }
 }

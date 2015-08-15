@@ -28,7 +28,6 @@ import java.util.Set;
 public class ConnectionReadGroup extends Thread {
     private static int threadId = 1;
 
-    private int serialNo = 0;
     private Map<Integer, Connection> connections = Collections.synchronizedMap(new HashMap<>());
     private Selector selector;
 
@@ -59,9 +58,12 @@ public class ConnectionReadGroup extends Thread {
     }
 
     public void add(Connection c) throws ClosedChannelException {
-        int id = serialNo++;
-        SelectionKey key = c.channel.register(selector, SelectionKey.OP_READ, id);
-        connections.put(id, c);
+        SelectionKey key = c.channel.register(selector, SelectionKey.OP_READ, c.id);
+        connections.put(c.id, c);
+    }
+
+    public void remove(Connection c) {
+        connections.remove(c.id);
     }
 
     public void shutdown() {

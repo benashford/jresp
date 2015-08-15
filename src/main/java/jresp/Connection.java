@@ -31,6 +31,10 @@ import java.util.*;
 public class Connection {
     private static final int BYTE_BUFFER_DEFAULT_SIZE = 16;
 
+    private static int serialNo = 1;
+
+    final Integer id = serialNo++;
+
     private String hostname;
     private int port;
 
@@ -68,6 +72,8 @@ public class Connection {
      */
     private ByteBuffer readBuffer = ByteBuffer.allocateDirect(5285);  // 1460
 
+    private boolean shutdown = false;
+
     /**
      * Constructor
      */
@@ -90,8 +96,17 @@ public class Connection {
         readGroup.add(this);
     }
 
-    void stop() {
-        throw new AssertionError("Unimplemented");
+    void shutdown() throws IOException {
+        shutdown = true;
+
+        channel.close();
+    }
+
+    public void stop() throws IOException {
+        writeGroup.remove(this);
+        readGroup.remove(this);
+
+        shutdown();
     }
 
     private int bufferRemaining() {
@@ -145,6 +160,10 @@ public class Connection {
     }
 
     public void write(Collection<RespType> messages) {
+        if (shutdown) {
+            throw new IllegalStateException("Connection has shutdown");
+        }
+
         Deque<ByteBuffer> out = new ArrayDeque<>();
         for (RespType message : messages) {
             message.writeBytes(out);

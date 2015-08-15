@@ -46,7 +46,7 @@ public class Client {
         return con;
     }
 
-    public void shutdown() {
+    public void shutdown() throws IOException {
         writeGroup.shutdown();
         readGroup.shutdown();
     }
