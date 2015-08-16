@@ -185,6 +185,9 @@ class OutgoingBuffer {
                 if ((tmp == null) && (bb.position() <= MAX_MERGED_BUFFER_SIZE)) {
                     tmp = bb;
                 } else {
+                    if (tmp == null) {
+                        tmp = ByteBuffer.allocate(MAX_MERGED_BUFFER_SIZE);
+                    }
                     bb.flip(); // put in read mode
                     while (bb.hasRemaining()) {
                         int tmpRemaining = tmp.remaining();
