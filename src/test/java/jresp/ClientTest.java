@@ -137,8 +137,9 @@ public class ClientTest {
     @Test
     public void thousandPingTest() throws Exception {
         int numPings = 1000;
+        int runs = 1;
 
-        for (int n = 0; n < 25; n++) {
+        for (int n = 0; n < runs; n++) {
             long start = System.nanoTime();
             latch = new CountDownLatch(numPings);
 
