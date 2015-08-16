@@ -54,6 +54,7 @@ As of the time of writing, it is used for [`redis-async`, a async Redis client f
 3. Performance testing.
 4. Redis clustering.
 5. Create a full Java client (optional).
+6. Tests regarding dropped connections.
 
 ## Licence
 

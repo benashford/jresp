@@ -84,7 +84,7 @@ public class Connection {
         this.readGroup = readGroup;
     }
 
-    void start(Responses responses) throws IOException {
+    public void start(Responses responses) throws IOException {
         this.responses = responses;
 
         this.channel = SocketChannel.open(new InetSocketAddress(hostname, port));

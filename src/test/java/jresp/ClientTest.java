@@ -23,29 +23,29 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-public class ClientTest {
-    private Client client;
-    private Connection con;
+public class ClientTest extends JRESPTest {
 
-    private CountDownLatch latch;
+    private Connection con;
 
     private List<RespType> results = new ArrayList<>();
 
     @Before
     public void setup() throws Exception {
-        client = new Client("localhost", 6379);
-        con = client.makeConnection(result -> {
+        super.setup();
+
+        con = client.makeConnection();
+        con.start(result -> {
             results.add(result);
             latch.countDown();
         });
@@ -57,51 +57,7 @@ public class ClientTest {
 
     @After
     public void teardown() throws Exception {
-        client.shutdown();
-    }
-
-    private Ary command(String name, RespType... options) {
-        List<RespType> elements = new ArrayList<>(options.length + 1);
-        elements.add(new BulkStr(name));
-        elements.addAll(Arrays.asList(options));
-
-        return new Ary(elements);
-    }
-
-    private RespType ping() {
-        return command("PING");
-    }
-
-    private RespType flushDB() {
-        return command("FLUSHDB");
-    }
-
-    private RespType get(String key) {
-        return command("GET", new BulkStr(key));
-    }
-
-    private RespType set(String key, String value) {
-        return command("SET", new BulkStr(key), new BulkStr(value));
-    }
-
-    private RespType sadd(String key, String value) {
-        return command("SADD", new BulkStr(key), new BulkStr(value));
-    }
-
-    private RespType smembers(String key) {
-        return command("SMEMBERS", new BulkStr(key));
-    }
-
-    private RespType hgetall(String key) {
-        return command("HGETALL", new BulkStr(key));
-    }
-
-    private void await() {
-        try {
-            latch.await(5, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            throw new IllegalStateException(e);
-        }
+        super.teardown();
     }
 
     /**
