@@ -33,6 +33,13 @@ public class Pool {
         this.client = client;
     }
 
+    /**
+     * The shared connection is for the majority of Redis commands that return one single response.  JRESP will
+     * automatically pipeline such commands for efficiency.
+     *
+     * Do not use such a connection for any blocking, pub-sub, or any other command that doesn't return one single
+     * response.
+     */
     public synchronized SharedConnection getShared() throws IOException {
         if (shared == null) {
             shared = new SharedConnection(client.makeConnection());
