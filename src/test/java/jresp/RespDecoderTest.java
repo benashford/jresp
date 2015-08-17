@@ -119,7 +119,7 @@ public class RespDecoderTest {
     @Test
     public void millionOks() throws Exception {
         List<RespType> oks = IntStream.range(0, 1_000_000).mapToObj(x -> new SimpleStr("OK")).collect(Collectors.toList());
-        for (int n = 0; n < 25; n++) {
+        for (int n = 0; n < 1; n++) {
             Collection<ByteBuffer> encoded = encode(oks);
 
             long startTime = System.nanoTime();
