@@ -185,19 +185,17 @@ class OutgoingBuffer {
                 if ((tmp == null) && (bb.position() <= MAX_MERGED_BUFFER_SIZE)) {
                     tmp = bb;
                 } else {
-                    if (tmp == null) {
-                        tmp = ByteBuffer.allocate(MAX_MERGED_BUFFER_SIZE);
-                    }
                     bb.flip(); // put in read mode
                     while (bb.hasRemaining()) {
+                        if (tmp == null) {
+                            tmp = ByteBuffer.allocate(MAX_MERGED_BUFFER_SIZE);
+                        }
                         int tmpRemaining = tmp.remaining();
                         if (tmpRemaining == 0) {
                             tmp.flip();
                             buffer.add(tmp);
-                            tmp = ByteBuffer.allocate(MAX_MERGED_BUFFER_SIZE);
-                            tmpRemaining = tmp.remaining();
-                        }
-                        if (bb.remaining() <= tmpRemaining) {
+                            tmp = null;
+                        } else if (bb.remaining() <= tmpRemaining) {
                             tmp.put(bb);
                         } else {
                             byte[] buffer = new byte[tmpRemaining];
@@ -207,8 +205,10 @@ class OutgoingBuffer {
                     }
                 }
             }
-            tmp.flip();
-            buffer.add(tmp);
+            if (tmp != null) {
+                tmp.flip();
+                buffer.add(tmp);
+            }
         }
     }
 
