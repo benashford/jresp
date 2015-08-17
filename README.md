@@ -49,12 +49,11 @@ As of the time of writing, it is used for [`redis-async`, a async Redis client f
 
 ## TODO
 
-1. Move connection pool to JRESP layer.
-2. Implement class-of-commands at the JRESP layer - e.g. normal, blocking, pub-sub (may not be possible without taking care of each particular command), etc.
-3. Performance testing.
-4. Redis clustering.
-5. Create a full Java client (optional).
-6. Tests regarding dropped connections.
+1. Database selection/authentication (probably needs to be at the JRESP layer, because of the connection pool).
+2. Performance testing.
+3. Redis clustering.
+4. Create a full Java client (optional).
+5. Tests regarding dropped connections.
 
 ## Licence
 
