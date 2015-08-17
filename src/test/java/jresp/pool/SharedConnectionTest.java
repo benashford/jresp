@@ -17,7 +17,6 @@
 package jresp.pool;
 
 import jresp.JRESPTest;
-import jresp.Responses;
 import jresp.protocol.RespType;
 import org.junit.After;
 import org.junit.Before;

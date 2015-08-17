@@ -33,6 +33,8 @@ public class Pool {
 
     private SingleCommandConnection shared;
 
+    private PubSubConnection pubSub;
+
     private Set<SingleCommandConnection> borrowable = new HashSet<>();
     private Set<SingleCommandConnection> borrowed = new HashSet<>();
 
@@ -94,5 +96,16 @@ public class Pool {
         } else {
             throw new IllegalStateException("This connection was not previously borrowed");
         }
+    }
+
+    /**
+     * Return a shared pub-sub channel.  A Redis connection that is subscribed to a channel cannot be used for other
+     * purposes
+     */
+    public synchronized PubSubConnection getPubSubChannel() throws IOException {
+        if (pubSub == null) {
+            pubSub = new PubSubConnection(client.makeConnection());
+        }
+        return pubSub;
     }
 }

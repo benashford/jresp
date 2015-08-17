@@ -85,6 +85,10 @@ public class JRESPTest {
         return command("RPUSH", new BulkStr(key), new BulkStr(value));
     }
 
+    protected static RespType publish(String channel, String payload) {
+        return command("PUBLISH", new BulkStr(channel), new BulkStr(payload));
+    }
+
     protected void await() {
         try {
             latch.await(5, TimeUnit.SECONDS);
