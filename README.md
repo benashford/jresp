@@ -39,8 +39,6 @@ Every `RespType` can be converted to the corresponding Java type by calling `unw
 
 `jresp` is not a Redis client.  It has no knowledge of the specific Redis commands or responses.  Nor how to handle the special-case commands like `MONITOR`, it is low-level enough that it doesn't have to worry about all these things, it is just a conduit for passing serialised RESP data from client to server and back.
 
-Nor does it make any attempt at connection pooling/reuse.  `Client` can create as many connections as it is asked to make, it is the responsibility of the caller to manage and reuse these connections.
-
 ## What is it for?
 
 There are pre-existing Redis clients for Java, both synchronous and asynchronous.  `jresp` was specifically intended to be the backend of multiple Redis clients for various JVM languages.
