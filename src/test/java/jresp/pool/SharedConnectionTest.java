@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package jresp.pool;
 
 import jresp.JRESPTest;
@@ -32,11 +33,7 @@ import static org.junit.Assert.*;
 public class SharedConnectionTest extends JRESPTest {
     private Pool pool;
 
-    private SharedConnection sharedConnection;
-
-    private static final Responses NULL_RESPONSES = response -> {
-        // nothing
-    };
+    private SingleCommandConnection sharedConnection;
 
     @Before
     public void setup() throws Exception {

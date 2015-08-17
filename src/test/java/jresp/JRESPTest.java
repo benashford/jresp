@@ -26,6 +26,10 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 public class JRESPTest {
+    protected static final Responses NULL_RESPONSES = response -> {
+        // nothing
+    };
+
     protected Client client;
     protected CountDownLatch latch;
 
@@ -71,6 +75,14 @@ public class JRESPTest {
 
     protected static RespType hgetall(String key) {
         return command("HGETALL", new BulkStr(key));
+    }
+
+    protected static RespType blpop(String key, int timeout) {
+        return command("BLPOP", new BulkStr(key), new BulkStr(Integer.toString(timeout)));
+    }
+
+    protected static RespType rpush(String key, String value) {
+        return command("RPUSH", new BulkStr(key), new BulkStr(value));
     }
 
     protected void await() {

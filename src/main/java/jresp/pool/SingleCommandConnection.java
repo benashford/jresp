@@ -25,14 +25,14 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 
 /**
- * A connection that can be shared between threads for non-blocking non-pub/sub commands
+ * A connection used solely for commands that have a single response to each request
  */
-public class SharedConnection {
+public class SingleCommandConnection {
     private Connection connection;
 
     private Deque<Responses> responseQueue = new ArrayDeque<>();
 
-    public SharedConnection(Connection connection) throws IOException {
+    public SingleCommandConnection(Connection connection) throws IOException {
         this.connection = connection;
         this.connection.start(resp -> {
             synchronized (responseQueue) {
