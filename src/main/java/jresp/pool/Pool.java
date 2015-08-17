@@ -102,7 +102,7 @@ public class Pool {
      * Return a shared pub-sub channel.  A Redis connection that is subscribed to a channel cannot be used for other
      * purposes
      */
-    public synchronized PubSubConnection getPubSubChannel() throws IOException {
+    public synchronized PubSubConnection getPubSub() throws IOException {
         if (pubSub == null) {
             pubSub = new PubSubConnection(client.makeConnection());
         }
