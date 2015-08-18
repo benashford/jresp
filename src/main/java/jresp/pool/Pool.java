@@ -108,4 +108,12 @@ public class Pool {
         }
         return pubSub;
     }
+
+    /**
+     * Shutdown a pool and it's underlying Client.  No connections issued by this pool will work once this has been
+     * shutdown.
+     */
+    public void shutdown() throws IOException {
+        client.shutdown();
+    }
 }
