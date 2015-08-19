@@ -35,6 +35,7 @@ public class JRESPTest {
 
     protected void setup() throws Exception {
         client = new Client("localhost", 6379);
+        client.setDb(2);
     }
 
     protected void teardown() throws Exception {
