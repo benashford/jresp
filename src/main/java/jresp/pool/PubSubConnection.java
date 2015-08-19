@@ -56,6 +56,16 @@ public class PubSubConnection {
         connection.write(new Ary(Arrays.asList(SUBSCRIBE, channelResp)));
     }
 
+    public void unsubscribe(String channel) throws PubSubException {
+        BulkStr channelResp = new BulkStr(channel);
+        synchronized (subscriptions) {
+            if (!subscriptions.containsKey(channelResp)) {
+                throw new PubSubException("Not subscribed to: " + channel);
+            }
+        }
+        connection.write(new Ary(Arrays.asList(UNSUBSCRIBE, channelResp)));
+    }
+
     public void psubscribe(String pattern, Responses responses) throws PubSubException {
         BulkStr patternResp = new BulkStr(pattern);
         synchronized (psubscriptions) {
@@ -66,6 +76,16 @@ public class PubSubConnection {
             }
         }
         connection.write(new Ary(Arrays.asList(PSUBSCRIBE, patternResp)));
+    }
+
+    public void pubsubscribe(String pattern) throws PubSubException {
+        BulkStr patternResp = new BulkStr(pattern);
+        synchronized (psubscriptions) {
+            if (!psubscriptions.containsKey(patternResp)) {
+                throw new PubSubException("Not subscribed to: " + pattern);
+            }
+        }
+        connection.write(new Ary(Arrays.asList(PUNSUBSCRIBE, patternResp)));
     }
 
     /**
@@ -91,11 +111,21 @@ public class PubSubConnection {
     }
 
     private void incomingPUnsubscribe(Iterator<RespType> i) {
-        // Do nothing yet
+        BulkStr pattern = (BulkStr)i.next();
+
+        // TODO - need to send some signal to close anything downstream waiting.
+        synchronized (psubscriptions) {
+            psubscriptions.remove(pattern);
+        }
     }
 
     private void incomingUnsubscribe(Iterator<RespType> i) {
-        // Do nothing yet
+        BulkStr channel = (BulkStr)i.next();
+
+        // TODO - need to send a signal downstream
+        synchronized (subscriptions) {
+            subscriptions.remove(channel);
+        }
     }
 
     private void incomingPSubscribe(Iterator<RespType> i) {
@@ -108,16 +138,22 @@ public class PubSubConnection {
 
     private void incomingPMessage(Iterator<RespType> i) {
         BulkStr pattern = (BulkStr)i.next();
-        Responses responses = psubscriptions.get(pattern);
         BulkStr channel = (BulkStr)i.next();
 
         Ary ary = new Ary(Arrays.asList(channel, i.next()));
-        responses.responseReceived(ary);
+
+        synchronized (psubscriptions) {
+            Responses responses = psubscriptions.get(pattern);
+            responses.responseReceived(ary);
+        }
     }
 
     private void incomingMessage(Iterator<RespType> i) {
         BulkStr channel = (BulkStr)i.next();
-        Responses responses = subscriptions.get(channel);
-        responses.responseReceived(i.next());
+
+        synchronized (subscriptions) {
+            Responses responses = subscriptions.get(channel);
+            responses.responseReceived(i.next());
+        }
     }
 }

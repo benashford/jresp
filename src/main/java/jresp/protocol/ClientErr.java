@@ -19,6 +19,10 @@ package jresp.protocol;
 import java.nio.ByteBuffer;
 import java.util.Deque;
 
+/**
+ * Not part of the RESP spec.  Used internally within JRESP and Redis clients based on JRESP to send exceptions
+ * to waiting functions.
+ */
 public class ClientErr implements RespType {
     private Throwable error;
 
