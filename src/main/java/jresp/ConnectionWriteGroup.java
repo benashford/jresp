@@ -41,7 +41,6 @@ public class ConnectionWriteGroup extends Thread {
     }
 
     public void run() {
-        // TODO - shutdown gracefully
         while (!shutdown) {
             Set<Connection> cons = signaller.reset();
             while (!cons.isEmpty()) {
