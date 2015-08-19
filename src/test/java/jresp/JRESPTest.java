@@ -92,7 +92,10 @@ public class JRESPTest {
 
     protected void await() {
         try {
-            latch.await(5, TimeUnit.SECONDS);
+            boolean success = latch.await(5, TimeUnit.SECONDS);
+            if (!success) {
+                throw new AssertionError("Timed out waiting");
+            }
         } catch (InterruptedException e) {
             throw new IllegalStateException(e);
         }
