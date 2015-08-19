@@ -51,10 +51,11 @@ As of the time of writing, it is used for [`redis-async`, a async Redis client f
 ## TODO
 
 1. Document pub/sub facilities and connection pool more.
-2. Performance testing.
-3. Redis clustering.
-4. Create a full Java client (optional).
-5. Tests regarding dropped connections.
+2. Try using a single thread for managing groups.
+3. Performance testing.
+4. Redis clustering.
+5. Create a full Java client (optional).
+6. Tests regarding dropped connections.
 
 ## Licence
 
