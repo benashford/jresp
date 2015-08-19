@@ -30,6 +30,10 @@ public class ClientErr implements RespType {
         this.error = error;
     }
 
+    public String toString() {
+        return String.format("%s[%s]", getClass().getName(), error.getMessage());
+    }
+
     @Override
     public void writeBytes(Deque<ByteBuffer> out) {
         throw new UnsupportedOperationException("This cannot be written anywhere, this is only to be used within the client");
