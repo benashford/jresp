@@ -21,6 +21,7 @@ import jresp.ConnectionException;
 import jresp.Responses;
 import jresp.protocol.Ary;
 import jresp.protocol.BulkStr;
+import jresp.protocol.EndOfResponses;
 import jresp.protocol.RespType;
 
 import java.io.IOException;
@@ -92,48 +93,86 @@ public class PubSubConnection {
      * Processes and routes an incoming message
      */
     public void incoming(RespType rawMessage) {
-        List<RespType> message = ((Ary) rawMessage).raw();
-        Iterator<RespType> i = message.iterator();
-        RespType msgType = i.next();
-        if (msgType.equals(MESSAGE)) {
-            incomingMessage(i);
-        } else if (msgType.equals(PMESSAGE)) {
-            incomingPMessage(i);
-        } else if (msgType.equals(SUBSCRIBE)) {
-            incomingSubscribe(i);
-        } else if (msgType.equals(PSUBSCRIBE)) {
-            incomingPSubscribe(i);
-        } else if (msgType.equals(UNSUBSCRIBE)) {
-            incomingUnsubscribe(i);
-        } else if (msgType.equals(PUNSUBSCRIBE)) {
-            incomingPUnsubscribe(i);
+        if (rawMessage instanceof EndOfResponses) {
+            endAllResponses();
+        } else {
+            List<RespType> message = ((Ary) rawMessage).raw();
+            Iterator<RespType> i = message.iterator();
+            RespType msgType = i.next();
+            if (msgType.equals(MESSAGE)) {
+                incomingMessage(i);
+            } else if (msgType.equals(PMESSAGE)) {
+                incomingPMessage(i);
+            } else if (msgType.equals(SUBSCRIBE)) {
+                incomingSubscribe(i);
+            } else if (msgType.equals(PSUBSCRIBE)) {
+                incomingPSubscribe(i);
+            } else if (msgType.equals(UNSUBSCRIBE)) {
+                incomingUnsubscribe(i);
+            } else if (msgType.equals(PUNSUBSCRIBE)) {
+                incomingPUnsubscribe(i);
+            }
+        }
+    }
+
+    /**
+     * If the connection is closed, this signals to all subscriptions that the connection has been closed.
+     * Any pending async requests will then end (e.g. a channel can be closed).
+     */
+    private void endAllResponses() {
+        synchronized (psubscriptions) {
+            psubscriptions.values().forEach(responses -> responses.responseReceived(new EndOfResponses()));
+        }
+
+        synchronized (subscriptions) {
+            subscriptions.values().forEach(responses -> responses.responseReceived(new EndOfResponses()));
         }
     }
 
     private void incomingPUnsubscribe(Iterator<RespType> i) {
         BulkStr pattern = (BulkStr)i.next();
 
-        // TODO - need to send some signal to close anything downstream waiting.
+        Responses resps;
         synchronized (psubscriptions) {
-            psubscriptions.remove(pattern);
+            resps = psubscriptions.remove(pattern);
         }
+
+        resps.responseReceived(new EndOfResponses());
     }
 
     private void incomingUnsubscribe(Iterator<RespType> i) {
         BulkStr channel = (BulkStr)i.next();
 
-        // TODO - need to send a signal downstream
+        Responses resps;
         synchronized (subscriptions) {
-            subscriptions.remove(channel);
+            resps = subscriptions.remove(channel);
         }
+
+        resps.responseReceived(new EndOfResponses());
     }
 
     private void incomingPSubscribe(Iterator<RespType> i) {
-        // Do nothing yet
+        BulkStr pattern = (BulkStr)i.next();
+
+        synchronized (psubscriptions) {
+            Responses responses = psubscriptions.get(pattern);
+            if (responses == null) {
+                throw new IllegalStateException("Not a recognised pattern: " + pattern);
+            }
+            responses.responseReceived(pattern);
+        }
     }
 
     private void incomingSubscribe(Iterator<RespType> i) {
-        // Do nothing yet
+        BulkStr channel = (BulkStr)i.next();
+
+        synchronized (subscriptions) {
+            Responses responses = subscriptions.get(channel);
+            if (responses == null) {
+                throw new IllegalStateException("Not a recognised channel: " + channel);
+            }
+            responses.responseReceived(channel);
+        }
     }
 
     private void incomingPMessage(Iterator<RespType> i) {
@@ -144,6 +183,9 @@ public class PubSubConnection {
 
         synchronized (psubscriptions) {
             Responses responses = psubscriptions.get(pattern);
+            if (responses == null) {
+                throw new IllegalStateException("Not believed to be subscribed to: " + pattern);
+            }
             responses.responseReceived(ary);
         }
     }
@@ -153,6 +195,9 @@ public class PubSubConnection {
 
         synchronized (subscriptions) {
             Responses responses = subscriptions.get(channel);
+            if (responses == null) {
+                throw new IllegalStateException("Not believed to be subscribed to: " + channel);
+            }
             responses.responseReceived(i.next());
         }
     }
