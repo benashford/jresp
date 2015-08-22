@@ -156,7 +156,10 @@ public class Connection {
     void shutdown() throws IOException {
         shutdown = true;
 
-        responses.responseReceived(new EndOfResponses());
+        if (responses != null) {
+            // Tell anything waiting that there will be no more data
+            responses.responseReceived(new EndOfResponses());
+        }
 
         channel.close();
     }
@@ -224,11 +227,15 @@ public class Connection {
     void readTick() throws IOException {
         try {
             int bytes = channel.read(readBuffer);
-            //System.out.println("Read: " + bytes);
-            readBuffer.flip();
-            List<RespType> out = new ArrayList<>();
-            decoder.decode(readBuffer, out);
-            out.forEach(responses::responseReceived);
+            if (bytes < 0) {
+                // This socket is closed, there will be no more data
+                shutdown();
+            } else {
+                readBuffer.flip();
+                List<RespType> out = new ArrayList<>();
+                decoder.decode(readBuffer, out);
+                out.forEach(responses::responseReceived);
+            }
         } finally {
             readBuffer.clear();
         }
