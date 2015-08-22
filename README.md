@@ -50,6 +50,7 @@ As of the time of writing, it is used for [`redis-async`, a async Redis client f
 
 ## TODO
 
+0. Ensure that closed connections (i.e. server goes down) are known, and that appropriate signals are delivered upstream.
 1. Document pub/sub facilities and connection pool more.
 2. Handling of stopped connections pools, etc.
 3. Try using a single thread for managing groups.
