@@ -49,7 +49,7 @@ public class ConnectionGroup extends Thread {
     public void run() {
         while (!shutdown) {
             try {
-                selector.select(10);
+                selector.select(100);
                 Set<SelectionKey> keys = selector.selectedKeys();
                 for (SelectionKey key : keys) {
                     Connection connection = connections.get(key.attachment());

@@ -23,7 +23,10 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Stream;
 
@@ -172,8 +175,10 @@ public class Connection {
             return;
         } else if (isOn) {
             selectionKey.interestOps(interestOps & ~SelectionKey.OP_WRITE);
+            selectionKey.selector().wakeup();
         } else if (on) {
             selectionKey.interestOps(interestOps | SelectionKey.OP_WRITE);
+            selectionKey.selector().wakeup();
         } else {
             return;
         }
