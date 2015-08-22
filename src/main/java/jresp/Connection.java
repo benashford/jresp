@@ -21,6 +21,7 @@ import jresp.protocol.*;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
@@ -48,10 +49,9 @@ public class Connection {
     private Integer db;
 
     /**
-     * The service threads
+     * The service thread
      */
-    private ConnectionWriteGroup writeGroup;
-    private ConnectionReadGroup readGroup;
+    private ConnectionGroup group;
 
     /**
      * The callback for incoming data
@@ -62,11 +62,12 @@ public class Connection {
      * The socket channel
      */
     SocketChannel channel;
+    private SelectionKey selectionKey;
 
     /**
      * The outgoing buffer
      */
-    private OutgoingBuffer outgoing = new OutgoingBuffer();
+    private final OutgoingBuffer outgoing = new OutgoingBuffer();
 
     /**
      * Decoder
@@ -78,6 +79,9 @@ public class Connection {
      */
     private ByteBuffer readBuffer = ByteBuffer.allocateDirect(5285);  // 1460 - PACKET ESTIMATE
 
+    /**
+     * Has this been shutdown
+     */
     private boolean shutdown = false;
 
     /**
@@ -85,12 +89,10 @@ public class Connection {
      */
     Connection(String hostname,
                int port,
-               ConnectionWriteGroup writeGroup,
-               ConnectionReadGroup readGroup) {
+               ConnectionGroup group) {
         this.hostname = hostname;
         this.port = port;
-        this.writeGroup = writeGroup;
-        this.readGroup = readGroup;
+        this.group = group;
     }
 
     /**
@@ -140,8 +142,8 @@ public class Connection {
     public void start(Responses responses) throws IOException, ConnectionException {
         this.channel = SocketChannel.open(new InetSocketAddress(hostname, port));
         this.channel.configureBlocking(false);
-        writeGroup.add(this);
-        readGroup.add(this);
+
+        this.selectionKey = group.add(this);
 
         loginAndSelect();
 
@@ -157,10 +159,24 @@ public class Connection {
     }
 
     public void stop() throws IOException {
-        writeGroup.remove(this);
-        readGroup.remove(this);
+        group.remove(this);
 
         shutdown();
+    }
+
+    private void writeInterest(boolean on) {
+        int interestOps = selectionKey.interestOps();
+        boolean isOn = (interestOps & SelectionKey.OP_WRITE) == SelectionKey.OP_WRITE;
+
+        if (isOn && on) {
+            return;
+        } else if (isOn) {
+            selectionKey.interestOps(interestOps & ~SelectionKey.OP_WRITE);
+        } else if (on) {
+            selectionKey.interestOps(interestOps | SelectionKey.OP_WRITE);
+        } else {
+            return;
+        }
     }
 
     public void write(RespType message) {
@@ -171,9 +187,11 @@ public class Connection {
         Deque<ByteBuffer> out = new ArrayDeque<>();
 
         message.writeBytes(out);
-        outgoing.addAll(out);
 
-        writeGroup.signal(this);
+        synchronized (outgoing) {
+            outgoing.addAll(out);
+            writeInterest(true);
+        }
     }
 
     void writeTick() throws IOException {
@@ -189,8 +207,10 @@ public class Connection {
             outgoing.addFirst(buff);
         }
 
-        if (!outgoing.isEmpty()) {
-            writeGroup.signal(this);
+        synchronized (outgoing) {
+            if (outgoing.isEmpty()) {
+                writeInterest(false);
+            }
         }
     }
 
