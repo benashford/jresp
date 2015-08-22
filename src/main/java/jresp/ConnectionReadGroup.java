@@ -25,6 +25,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * TODO - remove
+ */
+@Deprecated
 public class ConnectionReadGroup extends Thread {
     private static int threadId = 1;
 

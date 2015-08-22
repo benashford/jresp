@@ -24,6 +24,10 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.util.*;
 
+/**
+ * TODO - remove
+ */
+@Deprecated
 public class ConnectionWriteGroup extends Thread {
     private static int threadId = 1;
 
@@ -103,11 +107,3 @@ public class ConnectionWriteGroup extends Thread {
     }
 }
 
-class ShutdownException extends IOException {
-    private Collection<IOException> exceptions;
-
-    ShutdownException(Collection<IOException> e) {
-        super(String.format("Multiple (%d) exceptions", e.size()));
-        exceptions = e;
-    }
-}
