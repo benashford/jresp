@@ -17,6 +17,7 @@
 package jresp;
 
 import java.io.IOException;
+import java.nio.channels.CancelledKeyException;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -62,6 +63,9 @@ public class ConnectionGroup extends Thread {
                         }
                     } catch (IOException e) {
                         connection.reportException(e);
+                        connection.stop();
+                    } catch (CancelledKeyException e) {
+                        // The key may have been cancelled in the meantime
                         connection.stop();
                     }
                 }

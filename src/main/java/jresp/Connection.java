@@ -162,9 +162,11 @@ public class Connection {
     }
 
     public void stop() throws IOException {
-        group.remove(this);
+        if (!shutdown) {
+            group.remove(this);
 
-        shutdown();
+            shutdown();
+        }
     }
 
     private void writeInterest(boolean on) {
