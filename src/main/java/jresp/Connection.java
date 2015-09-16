@@ -80,7 +80,7 @@ public class Connection {
     /**
      * Read buffer
      */
-    private ByteBuffer readBuffer = ByteBuffer.allocateDirect(5285);  // 1460 - PACKET ESTIMATE
+    private ByteBuffer readBuffer = ByteBuffer.allocate(5285);  // 1460 - PACKET ESTIMATE
 
     /**
      * Has this been shutdown
