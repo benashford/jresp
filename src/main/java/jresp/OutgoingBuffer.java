@@ -18,6 +18,8 @@ package jresp;
 
 import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
 class OutgoingBuffer {
@@ -27,73 +29,90 @@ class OutgoingBuffer {
 
     private ByteBuffer current;
 
+    private final Lock lock = new ReentrantLock();
+
+    private void lock() {
+        lock.lock();
+    }
+
+    private void unlock() {
+        lock.unlock();
+    }
+
+    private void addToCurrent(ByteBuffer next) {
+        next.flip();
+        int nextSize = next.remaining();
+        while (nextSize > 0) {
+            int currentRemaining = current.remaining();
+            int allowableSize = Math.min(currentRemaining, nextSize);
+            if (allowableSize == 0) {
+                current.flip();
+
+                buffer.add(current);
+
+                current = ByteBuffer.allocate(MAX_MERGED_BUFFER_SIZE);
+            } else if (nextSize <= allowableSize) {
+                current.put(next);
+            } else {
+                byte[] ary = new byte[allowableSize];
+                next.get(ary);
+                current.put(ary);
+            }
+            nextSize = next.remaining();
+        }
+    }
+
     /**
      * All ByteBuffers must be in write mode at this point, they'll get flipped by this buffer
      */
-    synchronized void addAll(Collection<ByteBuffer> col) {
+    void addAll(Collection<ByteBuffer> col) {
         if (col.isEmpty()) {
             throw new IllegalArgumentException("Empty col");
         }
 
-        Consumer<ByteBuffer> addToCurrent = next -> {
-            next.flip();
-            int nextSize = next.remaining();
-            while (nextSize > 0) {
-                int currentRemaining = current.remaining();
-                int allowableSize = Math.min(currentRemaining, nextSize);
-                if (allowableSize == 0) {
-                    current.flip();
-
-                    buffer.add(current);
-
-                    current = ByteBuffer.allocate(MAX_MERGED_BUFFER_SIZE);
-                } else if (nextSize <= allowableSize) {
-                    current.put(next);
-                } else {
-                    byte[] ary = new byte[allowableSize];
-                    next.get(ary);
-                    current.put(ary);
-                }
-                nextSize = next.remaining();
-            }
-        };
-
         for (ByteBuffer next : col) {
+            lock();
             if (current == null) {
                 if (next.capacity() == MAX_MERGED_BUFFER_SIZE) {
                     current = next;
                 } else {
                     current = ByteBuffer.allocate(MAX_MERGED_BUFFER_SIZE);
-                    addToCurrent.accept(next);
+                    addToCurrent(next);
                 }
             } else {
-                addToCurrent.accept(next);
+                addToCurrent(next);
             }
+            unlock();
         }
 
-        if (buffer.isEmpty()) {
+        lock();
+        if (buffer.isEmpty() && current != null && current.position() > 0) {
             current.flip();
             buffer.add(current);
             current = null;
         }
+        unlock();
     }
 
-    public synchronized void addFirst(ByteBuffer bb) {
+    public void addFirst(ByteBuffer bb) {
+        lock();
         buffer.addFirst(bb);
+        unlock();
     }
 
-    public synchronized ByteBuffer pop() {
-        if (buffer.isEmpty()) {
-            if (current == null) {
-                return null;
-            } else {
-                ByteBuffer next = current;
-                current = null;
-                next.flip();
-                return next;
-            }
-        } else {
-            return buffer.pop();
+    public ByteBuffer pop() {
+        ByteBuffer bb = null;
+
+        lock();
+        if (buffer.isEmpty() && current != null) {
+            bb = current;
+            current = null;
+            bb.flip();
+        } else if (!buffer.isEmpty()) {
+            bb = buffer.pop();
         }
+        unlock();
+
+        return bb;
     }
 }
