@@ -50,6 +50,7 @@ As of the time of writing, it is used for [`redis-async`, a async Redis client f
 
 ## TODO
 
+1. Investigate inefficient buffering.
 1. Ensure that closed connections (i.e. server goes down) are known, and that appropriate signals are delivered upstream.
 2. Document pub/sub facilities and connection pool more.
 3. Handling of stopped connections pools, etc.
