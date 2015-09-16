@@ -20,13 +20,13 @@ import jresp.protocol.RespType;
 import jresp.state.*;
 
 import java.nio.ByteBuffer;
-import java.util.List;
+import java.util.function.Consumer;
 
 public class RespDecoder {
 
     private State state = null;
 
-    protected void decode(ByteBuffer in, List<RespType> out) {
+    protected void decode(ByteBuffer in, Consumer<RespType> out) {
         while (true) {
             int availableBytes = in.remaining();
             if (availableBytes == 0) {
@@ -44,7 +44,7 @@ public class RespDecoder {
                 state = nextState(nextChar);
             }
             if (state.decode(in)) {
-                out.add(state.finish());
+                out.accept(state.finish());
                 state = null;
             } else {
                 //

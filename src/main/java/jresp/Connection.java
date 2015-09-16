@@ -230,9 +230,7 @@ public class Connection {
                 shutdown();
             } else {
                 readBuffer.flip();
-                List<RespType> out = new ArrayList<>();
-                decoder.decode(readBuffer, out);
-                out.forEach(responses::responseReceived);
+                decoder.decode(readBuffer, responses::responseReceived);
             }
         } finally {
             readBuffer.clear();
