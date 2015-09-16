@@ -48,12 +48,7 @@ public class SingleCommandConnectionTest extends JRESPTest {
             long startTime = System.nanoTime();
             latch = new CountDownLatch(n);
             IntStream.range(0, n).forEach(x -> {
-                List<RespType> elements = new ArrayList<>(3);
-                elements.add(new BulkStr("SET"));
-                elements.add(new BulkStr("foo"));
-                elements.add(new BulkStr("bar"));
-
-                RespType setAry = new Ary(elements);
+                RespType setAry = new Ary(BulkStr.get("SET"), new BulkStr("foo"), new BulkStr("bar"));
 
                 con.write(setAry, resp -> latch.countDown());
             });
