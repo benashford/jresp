@@ -24,7 +24,16 @@ import java.util.function.Consumer;
 
 public class RespDecoder {
 
+    private SimpleStrState simpleStrDecoder = new SimpleStrState();
+    private ErrState errDecoder = new ErrState();
+    private IntState intDecoder = new IntState();
+    private BulkStrState bulkStrDecoder;
+
     private State state = null;
+
+    RespDecoder() {
+        bulkStrDecoder = new BulkStrState(this);
+    }
 
     protected void decode(ByteBuffer in, Consumer<RespType> out) {
         while (true) {
@@ -55,21 +64,25 @@ public class RespDecoder {
         }
     }
 
-    public static State nextState(char token) {
+    public State nextState(char token) {
         switch (token) {
             case '+':
-                return new SimpleStrState();
+                return simpleStrDecoder.reset();
             case '-':
-                return new ErrState();
+                return errDecoder.reset();
             case ':':
-                return new IntState();
+                return intDecoder.reset();
             case '$':
-                return new BulkStrState();
+                return bulkStrDecoder.reset();
             case '*':
-                return new AryState();
+                return new AryState(this);
             default:
                 throw new IllegalStateException(String.format("Unknown token %s", token));
         }
+    }
+
+    public IntState intDecoder() {
+        return (IntState)intDecoder.reset();
     }
 }
 
