@@ -57,7 +57,7 @@ public class SingleCommandConnectionTest extends JRESPTest {
 
                 con.write(setAry, resp -> latch.countDown());
             });
-            System.out.printf("Finished writing: %.2f%n", (System.nanoTime() - startTime) / 1000000.0);
+            System.out.printf("Finished writing: %.2f (recd: %d)%n", (System.nanoTime() - startTime) / 1000000.0, latch.getCount());
             await();
             System.out.printf("Took: %.2f%n", (System.nanoTime() - startTime) / 1000000.0);
         }
@@ -77,7 +77,7 @@ public class SingleCommandConnectionTest extends JRESPTest {
             long startTime = System.nanoTime();
             latch = new CountDownLatch(n);
             IntStream.range(0, n).forEach(x -> con.write(setAry, resp -> latch.countDown()));
-            System.out.printf("Finished writing: %.2f%n", (System.nanoTime() - startTime) / 1000000.0);
+            System.out.printf("Finished writing: %.2f (recd: %d)%n", (System.nanoTime() - startTime) / 1000000.0, latch.getCount());
             await();
             System.out.printf("Took: %.2f%n", (System.nanoTime() - startTime) / 1000000.0);
         }
