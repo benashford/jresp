@@ -205,9 +205,13 @@ public class Connection {
     }
 
     void writeTick() throws IOException {
-        ByteBuffer buff = outgoing.pop();
-        if (buff == null) {
-            return;
+        ByteBuffer buff;
+        synchronized (outgoing) {
+            buff = outgoing.pop();
+            if (buff == null) {
+                writeInterest(false);
+                return;
+            }
         }
 
         channel.write(buff);
@@ -215,12 +219,6 @@ public class Connection {
         if (buff.hasRemaining()) {
             // Data remaining, so putting at the front of the queue for the next time around
             outgoing.addFirst(buff);
-        }
-
-        synchronized (outgoing) {
-            if (outgoing.isEmpty()) {
-                writeInterest(false);
-            }
         }
     }
 

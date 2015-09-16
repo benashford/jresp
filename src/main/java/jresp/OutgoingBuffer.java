@@ -17,68 +17,65 @@
 package jresp;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayDeque;
-import java.util.Collection;
-import java.util.Deque;
+import java.util.*;
+import java.util.function.Consumer;
 
 class OutgoingBuffer {
     private static final int MAX_MERGED_BUFFER_SIZE = 1460;
 
-    private Deque<ByteBuffer> buffer = new ArrayDeque<>();
+    private final Deque<ByteBuffer> buffer = new ArrayDeque<>();
+
+    private ByteBuffer current;
 
     /**
      * All ByteBuffers must be in write mode at this point, they'll get flipped by this buffer
      */
     synchronized void addAll(Collection<ByteBuffer> col) {
-        if (buffer.isEmpty() && col.size() == 1) {
-            ByteBuffer bb = col.iterator().next();
-            if (bb.position() <= MAX_MERGED_BUFFER_SIZE) {
-                bb.flip();
-                buffer.add(bb);
-                return;
-            }
-        } else {
-            ByteBuffer tmp = null;
-            if (!buffer.isEmpty()) {
-                ByteBuffer last = buffer.removeLast();
-                if (last.remaining() <= MAX_MERGED_BUFFER_SIZE) {
-                    tmp = ByteBuffer.allocate(MAX_MERGED_BUFFER_SIZE);
-                    tmp.put(last);
-                }
-            }
-            for (ByteBuffer bb : col) {
-                if ((tmp == null) && (bb.position() <= MAX_MERGED_BUFFER_SIZE)) {
-                    tmp = bb;
+        if (col.isEmpty()) {
+            throw new IllegalArgumentException("Empty col");
+        }
+
+        Consumer<ByteBuffer> addToCurrent = next -> {
+            next.flip();
+            int nextSize = next.remaining();
+            while (nextSize > 0) {
+                int currentRemaining = current.remaining();
+                int allowableSize = Math.min(currentRemaining, nextSize);
+                if (allowableSize == 0) {
+                    current.flip();
+
+                    buffer.add(current);
+
+                    current = ByteBuffer.allocate(MAX_MERGED_BUFFER_SIZE);
+                } else if (nextSize <= allowableSize) {
+                    current.put(next);
                 } else {
-                    bb.flip(); // put in read mode
-                    while (bb.hasRemaining()) {
-                        if (tmp == null) {
-                            tmp = ByteBuffer.allocate(MAX_MERGED_BUFFER_SIZE);
-                        }
-                        int tmpRemaining = tmp.remaining();
-                        if (tmpRemaining == 0) {
-                            tmp.flip();
-                            buffer.add(tmp);
-                            tmp = null;
-                        } else if (bb.remaining() <= tmpRemaining) {
-                            tmp.put(bb);
-                        } else {
-                            byte[] buffer = new byte[tmpRemaining];
-                            bb.get(buffer);
-                            tmp.put(buffer);
-                        }
-                    }
+                    byte[] ary = new byte[allowableSize];
+                    next.get(ary);
+                    current.put(ary);
                 }
+                nextSize = next.remaining();
             }
-            if (tmp != null) {
-                tmp.flip();
-                buffer.add(tmp);
+        };
+
+        for (ByteBuffer next : col) {
+            if (current == null) {
+                if (next.capacity() == MAX_MERGED_BUFFER_SIZE) {
+                    current = next;
+                } else {
+                    current = ByteBuffer.allocate(MAX_MERGED_BUFFER_SIZE);
+                    addToCurrent.accept(next);
+                }
+            } else {
+                addToCurrent.accept(next);
             }
         }
-    }
 
-    public synchronized boolean isEmpty() {
-        return buffer.isEmpty();
+        if (buffer.isEmpty()) {
+            current.flip();
+            buffer.add(current);
+            current = null;
+        }
     }
 
     public synchronized void addFirst(ByteBuffer bb) {
@@ -87,7 +84,14 @@ class OutgoingBuffer {
 
     public synchronized ByteBuffer pop() {
         if (buffer.isEmpty()) {
-            return null;
+            if (current == null) {
+                return null;
+            } else {
+                ByteBuffer next = current;
+                current = null;
+                next.flip();
+                return next;
+            }
         } else {
             return buffer.pop();
         }

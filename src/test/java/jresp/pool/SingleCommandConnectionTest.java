@@ -57,7 +57,8 @@ public class SingleCommandConnectionTest extends JRESPTest {
 
                 con.write(setAry, resp -> latch.countDown());
             });
-            latch.await();
+            System.out.printf("Finished writing: %.2f%n", (System.nanoTime() - startTime) / 1000000.0);
+            await();
             System.out.printf("Took: %.2f%n", (System.nanoTime() - startTime) / 1000000.0);
         }
     }
@@ -76,8 +77,27 @@ public class SingleCommandConnectionTest extends JRESPTest {
             long startTime = System.nanoTime();
             latch = new CountDownLatch(n);
             IntStream.range(0, n).forEach(x -> con.write(setAry, resp -> latch.countDown()));
-            latch.await();
+            System.out.printf("Finished writing: %.2f%n", (System.nanoTime() - startTime) / 1000000.0);
+            await();
             System.out.printf("Took: %.2f%n", (System.nanoTime() - startTime) / 1000000.0);
         }
+    }
+
+    @Test
+    public void echoTest() throws Exception {
+        int n = 1000;
+        List<String> responses = new ArrayList<>();
+        latch = new CountDownLatch(n);
+        IntStream.range(0, n).forEach(x -> {
+            List<RespType> elements = new ArrayList<>();
+            elements.add(new BulkStr("ECHO"));
+            elements.add(new BulkStr(Integer.toString(x)));
+
+            con.write(new Ary(elements), resp -> {
+                responses.add((String)resp.unwrap());
+                latch.countDown();
+            });
+        });
+        await();
     }
 }
