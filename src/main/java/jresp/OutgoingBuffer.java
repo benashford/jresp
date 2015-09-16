@@ -18,9 +18,6 @@ package jresp;
 
 import java.nio.ByteBuffer;
 import java.util.*;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Consumer;
 
 class OutgoingBuffer {
     private static final int MAX_MERGED_BUFFER_SIZE = 1460;
@@ -28,16 +25,6 @@ class OutgoingBuffer {
     private final Deque<ByteBuffer> buffer = new ArrayDeque<>();
 
     private ByteBuffer current;
-
-    private final Lock lock = new ReentrantLock();
-
-    private void lock() {
-        lock.lock();
-    }
-
-    private void unlock() {
-        lock.unlock();
-    }
 
     private void addToCurrent(ByteBuffer next) {
         next.flip();
@@ -71,47 +58,47 @@ class OutgoingBuffer {
         }
 
         for (ByteBuffer next : col) {
-            lock();
-            if (current == null) {
-                if (next.capacity() == MAX_MERGED_BUFFER_SIZE) {
-                    current = next;
+            synchronized (this) {
+                if (current == null) {
+                    if (next.capacity() == MAX_MERGED_BUFFER_SIZE) {
+                        current = next;
+                    } else {
+                        current = ByteBuffer.allocate(MAX_MERGED_BUFFER_SIZE);
+                        addToCurrent(next);
+                    }
                 } else {
-                    current = ByteBuffer.allocate(MAX_MERGED_BUFFER_SIZE);
                     addToCurrent(next);
                 }
-            } else {
-                addToCurrent(next);
             }
-            unlock();
         }
 
-        lock();
-        if (buffer.isEmpty() && current != null && current.position() > 0) {
-            current.flip();
-            buffer.add(current);
-            current = null;
+        synchronized (this) {
+            if (buffer.isEmpty() && current != null && current.position() > 0) {
+                current.flip();
+                buffer.add(current);
+                current = null;
+            }
         }
-        unlock();
     }
 
     public void addFirst(ByteBuffer bb) {
-        lock();
-        buffer.addFirst(bb);
-        unlock();
+        synchronized (this) {
+            buffer.addFirst(bb);
+        }
     }
 
     public ByteBuffer pop() {
         ByteBuffer bb = null;
 
-        lock();
-        if (buffer.isEmpty() && current != null) {
-            bb = current;
-            current = null;
-            bb.flip();
-        } else if (!buffer.isEmpty()) {
-            bb = buffer.pop();
+        synchronized (this) {
+            if (buffer.isEmpty() && current != null) {
+                bb = current;
+                current = null;
+                bb.flip();
+            } else if (!buffer.isEmpty()) {
+                bb = buffer.pop();
+            }
         }
-        unlock();
 
         return bb;
     }
