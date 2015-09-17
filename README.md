@@ -50,7 +50,9 @@ As of the time of writing, it is used for [`redis-async`, a async Redis client f
 
 ## Performance
 
-So how does it perform compared to existing Java Redis clients.  I have adapted some basic tests which were originally developed for Stefan Wille's [test for a Redis client in Crystal](https://www.stefanwille.com/2015/05/redis-clients-crystal-vs-ruby-vs-c-vs-go/).  In my case I'm only interested in comparing against other Java clients, so I only test against [Jedis](https://github.com/xetorthio/jedis).
+So how does it perform compared to existing Java Redis clients?
+
+I have adapted some basic tests which were originally developed for Stefan Wille's [test for a Redis client in Crystal](https://www.stefanwille.com/2015/05/redis-clients-crystal-vs-ruby-vs-c-vs-go/).  In my case I'm only interested in comparing against other Java clients, so I only test against [Jedis](https://github.com/xetorthio/jedis).
 
 DISCLAIMER: this test only measures what it tests, Jedis has more features which are obviously not tested here.
 
