@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Ben Ashford
+ * Copyright 2015-2016 Ben Ashford
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ public class ConnectionGroup extends Thread {
 
     private boolean shutdown = false;
 
-    ConnectionGroup() throws IOException {
+    public ConnectionGroup() throws IOException {
         selector = Selector.open();
 
         setName(String.format("ConnectionGroup-%d", threadId++));
