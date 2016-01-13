@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Ben Ashford
+ * Copyright 2015-2016 Ben Ashford
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 
 package jresp.pool;
 
-import jresp.Client;
 import jresp.Connection;
 import jresp.ConnectionException;
+import jresp.GrouplessClient;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -30,7 +30,7 @@ import java.util.Set;
  * single shared connection.  However there are some Redis commands that are exceptions to this rule.
  */
 public class Pool {
-    private Client client;
+    private GrouplessClient client;
 
     private SingleCommandConnection shared;
 
@@ -39,7 +39,7 @@ public class Pool {
     private Set<SingleCommandConnection> borrowable = new HashSet<>();
     private Set<SingleCommandConnection> borrowed = new HashSet<>();
 
-    public Pool(Client client) {
+    public Pool(GrouplessClient client) {
         this.client = client;
     }
 

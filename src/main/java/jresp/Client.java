@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Ben Ashford
+ * Copyright 2015-2016 Ben Ashford
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,42 +19,21 @@ package jresp;
 import java.io.IOException;
 
 /**
- * The owner of one-or-more connections.
+ * The owner of one-or-more connections.  Owns it's own connection group.
  */
-public class Client {
-    private final String hostname;
-
-    private final int port;
-
-    private String password;
-    private Integer db;
-
-    private final ConnectionGroup group;
+public class Client extends GrouplessClient {
 
     public Client(String hostname, int port) throws IOException {
-        this.hostname = hostname;
-        this.port = port;
+        super(hostname, port);
 
-        group = new ConnectionGroup();
+        ConnectionGroup group = new ConnectionGroup();
         group.start();
+
+        setGroup(group);
     }
 
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public void setDb(Integer db) {
-        this.db = db;
-    }
-
-    public Connection makeConnection() throws IOException {
-        Connection con = new Connection(hostname, port, group);
-        con.setPassword(password);
-        con.setDb(db);
-        return con;
-    }
-
+    @Override
     public void shutdown() throws IOException {
-        group.shutdown();
+        getGroup().shutdown();
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Ben Ashford
+ * Copyright 2015-2016 Ben Ashford
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,10 @@ package jresp;
 import java.io.IOException;
 import java.util.Collection;
 
-class ShutdownException extends IOException {
+public class ShutdownException extends IOException {
     private Collection<IOException> exceptions;
 
-    ShutdownException(Collection<IOException> e) {
+    public ShutdownException(Collection<IOException> e) {
         super(String.format("Multiple (%d) exceptions", e.size()));
         exceptions = e;
     }

@@ -15,19 +15,18 @@
  */
 package jresp.cluster;
 
-import jresp.Connection;
 import jresp.ConnectionGroup;
+import jresp.GrouplessClient;
+import jresp.ShutdownException;
+import jresp.pool.Pool;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class Cluster {
     private final ConnectionGroup group;
 
-    private final Map<Node, Connection> knownConnections = new HashMap<>();
+    private final Map<Node, Pool> knownConnections = new HashMap<>();
 
     public Cluster(String hostname, int port) throws IOException {
         this(new Node(hostname, port));
@@ -41,8 +40,29 @@ public class Cluster {
         group = new ConnectionGroup();
         group.start();
 
-        startNodes.forEach(node -> {
-            knownConnections.put(node, new Connection(node.getHostname(), node.getPort(), group));
-        });
+        for (Node node : startNodes) {
+            GrouplessClient c = new GrouplessClient(node.getHostname(), node.getPort());
+            c.setGroup(group);
+            knownConnections.put(node, new Pool(c));
+        }
+    }
+
+    public void shutdown() throws IOException {
+        List<IOException> shutdownExceptions = null;
+        for (Pool pool : knownConnections.values()) {
+            try {
+                pool.shutdown();
+            } catch (IOException e) {
+                if (shutdownExceptions == null) {
+                    shutdownExceptions = new ArrayList<>();
+                }
+                shutdownExceptions.add(e);
+            }
+        }
+        group.shutdown();
+
+        if (shutdownExceptions != null) {
+            throw new ShutdownException(shutdownExceptions);
+        }
     }
 }
